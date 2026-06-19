@@ -3,18 +3,16 @@
 #include <string>
 #include <cstdint>
 
-namespace Crystall 
-{
+namespace Crystall {
 
-    using Bitboard = uint64_t;
+    using u64 = uint64_t;
 
     // enums & constants
 
     constexpr int FILE_NB = 8, 
                   RANK_NB = 8, 
                   SQUARE_NB = FILE_NB * RANK_NB;
-    enum class Square : uint8_t 
-    {
+    enum Square : uint8_t {
         A1, B1, C1, D1, E1, F1, G1, H1,
         A2, B2, C2, D2, E2, F2, G2, H2,
         A3, B3, C3, D3, E3, F3, G3, H3,
@@ -24,19 +22,18 @@ namespace Crystall
         A8, B8, C8, D8, E8, F8, G8, H8,
         A7, B7, C7, D7, E7, F7, G7, H7,
 
-        None
+        NO_SQUARE
     };
 
     constexpr int COLOR_NB = 2, 
                   PIECETYPE_NB = 6, 
                   PIECE_NB = COLOR_NB * PIECETYPE_NB;
-    enum class Color : uint8_t { White, Black };
-    enum class PieceType : uint8_t { Pawn, Knight, Bishop, Rook, Queen, King };
-    enum class Piece : uint8_t 
-    {
-        WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing,
-        BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing,
-        None
+    enum Color : uint8_t { WHITE, BLACK };
+    enum PieceType : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+    enum Piece : uint8_t {
+        WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
+        BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
+        NO_PIECE
     };
 
     // helpers
@@ -49,8 +46,7 @@ namespace Crystall
     inline int file_of(Square s) { return int(s) % 8; }
     inline int rank_of(Square s) { return int(s) / 8; }
 
-    inline Square make_square(std::string str) 
-    {
+    inline Square make_square(std::string str) {
         char rc = str[1];
         char fc = str[0];
 
@@ -60,8 +56,7 @@ namespace Crystall
         return make_square(rank, file);
     }
 
-    namespace Castling 
-    {
-        constexpr int WHITE_KINGSIDE = 1, WHITE_QUEENSIDE = 2, BLACK_KINGSIDE = 4, BLACK_QUEENSIDE = 8;
-    }
+    enum Castling : int {
+        CASTLING_WK, CASTLING_WQ, CASTLING_BK, CASTLING_BQ
+    };
 }
