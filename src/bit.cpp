@@ -204,8 +204,8 @@ namespace Crystall {
         };
 
         // we initialize these tables at runtime using init
-        volatile u64 BishopAttacks[5248];
-        volatile u64 RookAttacks[102400];
+        u64 BishopAttacks[5248];
+        u64 RookAttacks[102400];
 
         struct Direction { int r, f; };
         constexpr Direction BishopDirections[4] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
@@ -320,5 +320,12 @@ namespace Crystall {
 
             std::cout << "Bitboards initialized in " << (duration_cast<nanoseconds>(end - start).count() / 1'000'000.0) << " ms" << std::endl;
         }
+
+        u64 knight_attacks(Square square) { return KnightAttacks[square]; }
+        u64 king_attacks(Square square) { return KingAttacks[square]; }
+        u64 pawn_attacks(Square square, Color color) { return color == WHITE ? WhitePawnAttacks[square] : BlackPawnAttacks[square]; }
+        u64 bishop_attack(Square square, u64 occ) { return BishopAttacks[hash_bishop(square, occ) + BishopOffsets[square]]; }
+        u64 rook_attack(Square square, u64 occ) { return RookAttacks[hash_rook(square, occ) + RookOffsets[square]]; }
+        u64 queen_attack(Square square, u64 occ) { return rook_attack(square, occ) | bishop_attack(square, occ); }
     }
 }

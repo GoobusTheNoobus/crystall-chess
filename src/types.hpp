@@ -41,22 +41,33 @@ namespace Crystall {
     inline Piece make_piece(PieceType pt, Color c) { return Piece(int(c) * 6 + int(pt)); }
     inline PieceType type_of(Piece p) { return PieceType(int(p) % 6); }
     inline Color color_of(Piece p) { return Color(int(p) / 6); }
+    inline Color opposite(Color c) { return Color(c ^ 1); }
 
     inline Square make_square(int r, int f) { return Square(r * 8 + f); }
     inline int file_of(Square s) { return int(s) % 8; }
     inline int rank_of(Square s) { return int(s) / 8; }
 
     inline Square make_square(std::string str) {
+
         char rc = str[1];
         char fc = str[0];
 
         int rank = rc - '1';
         int file = fc - 'a';
 
+        if (unsigned(rank) > 7 || unsigned(file) > 7) return NO_SQUARE;
+
         return make_square(rank, file);
     }
 
+    inline std::string square_to_string(Square square) {
+        char rc = rank_of(square) + '1';
+        char fc = file_of(square) + 'a';
+
+        return {fc, rc};
+    }
+
     enum Castling : int {
-        CASTLING_WK, CASTLING_WQ, CASTLING_BK, CASTLING_BQ
+        CASTLING_WK = 1, CASTLING_WQ = 2, CASTLING_BK = 4, CASTLING_BQ = 8
     };
 }

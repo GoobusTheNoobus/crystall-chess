@@ -15,13 +15,13 @@ namespace Crystall {
     namespace Bitboards {
 
         constexpr u64 RankBB[RANK_NB] = {
-            0x0101010101010101ULL, 0x0202020202020202ULL, 0x0404040404040404ULL, 0x0808080808080808ULL,
-            0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+            0x00000000000000FFULL, 0x000000000000FF00ULL, 0x0000000000FF0000ULL, 0x00000000FF000000ULL,
+            0x000000FF00000000ULL, 0x0000FF0000000000ULL, 0x00FF000000000000ULL, 0xFF00000000000000ULL,
         };
 
         constexpr u64 FileBB[FILE_NB] = {
-            0x00000000000000FFULL, 0x000000000000FF00ULL, 0x0000000000FF0000ULL, 0x00000000FF000000ULL,
-            0x000000FF00000000ULL, 0x0000FF0000000000ULL, 0x00FF000000000000ULL, 0xFF00000000000000ULL,
+            0x0101010101010101ULL, 0x0202020202020202ULL, 0x0404040404040404ULL, 0x0808080808080808ULL,
+            0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
         };
 
         constexpr u64 SquareBB[SQUARE_NB] = {
@@ -35,11 +35,12 @@ namespace Crystall {
             1ULL << 56, 1ULL << 57, 1ULL << 58, 1ULL << 59, 1ULL << 60, 1ULL << 61, 1ULL << 62, 1ULL << 63,
         };
 
-        u64 knight_attacks(Square square);
-        u64 king_attacks(Square square);
-        u64 pawn_attacks(Square square, Color color);
-        u64 bishop_attack(Square square, u64 occ);
-        u64 rook_attack(Square square, u64 occ); 
+        u64 knight_attacks(Square);
+        u64 king_attacks(Square);
+        u64 pawn_attacks(Square, Color);
+        u64 bishop_attack(Square, u64 occ);
+        u64 rook_attack(Square, u64 occ); 
+        u64 queen_attack(Square, u64 occ);
 
         void init();
     }

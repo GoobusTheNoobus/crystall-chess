@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "move.hpp"
 #include <string>
 
 namespace Crystall {
@@ -45,6 +46,15 @@ namespace Crystall {
         inline Square get_en_passant() const { return state.en_passant_square; }
         inline bool has_castling_right(int mask) const { return state.castling_rights & mask; }
         inline bool is_rule_50() const { return state.rule50_clock >= 100; }
+
+        // big boy functions 
+        bool is_attacked(Square, Color by) const;
+        bool is_in_check(Color) const;
+        bool is_in_check() const;
+
+        // bigger boy functions
+        int generate_pseudo_legal_moves(Move[]) const;
+
 
         // helper functions
         private:
