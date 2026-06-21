@@ -224,8 +224,8 @@ namespace Crystall {
         // compute bitboards
         u64 single_push_bb = (is_white ? pawns << 8 : pawns >> 8) & ~occ;
         u64 double_push_bb = (is_white ? (single_push_bb & rank3_from_bottom) << 8 : (single_push_bb & rank3_from_bottom) >> 8) & ~occ;
-        u64 left_capture_bb = (is_white ? (pawns & ~Bitboards::FileBB[0]) << 7 : (pawns & ~Bitboards::FileBB[7]) >> 9) & enemy;
-        u64 right_capture_bb = (is_white ? (pawns & ~Bitboards::FileBB[7]) << 9 : (pawns & ~Bitboards::FileBB[0]) >> 7) & enemy;
+        u64 left_capture_bb = (is_white ? (pawns & ~Bitboards::FileBB[0]) << 7 : (pawns & ~Bitboards::FileBB[0]) >> 9) & enemy;
+        u64 right_capture_bb = (is_white ? (pawns & ~Bitboards::FileBB[7]) << 9 : (pawns & ~Bitboards::FileBB[7]) >> 7) & enemy;
 
         u64 single_push_promo_bb = single_push_bb & rank8_from_bottom;
         u64 single_push_normal_bb = single_push_bb & ~rank8_from_bottom;
@@ -323,6 +323,7 @@ namespace Crystall {
             }
         } else {
             std::cerr << "NO KING ON BOARD" << std::endl;
+            std::cout << *this;
             exit(-1);
         }
 
@@ -330,6 +331,9 @@ namespace Crystall {
         constexpr static u64 WQ_CASTLE_EMPTY = Bitboards::SquareBB[D1] | Bitboards::SquareBB[C1] | Bitboards::SquareBB[B1];
         constexpr static u64 BK_CASTLE_EMPTY = Bitboards::SquareBB[F8] | Bitboards::SquareBB[G8];
         constexpr static u64 BQ_CASTLE_EMPTY = Bitboards::SquareBB[D8] | Bitboards::SquareBB[C8] | Bitboards::SquareBB[B8];
+
+        // std::cout << occ << std::endl;
+        // std::cout << BK_CASTLE_EMPTY << std::endl;
 
         // castling
         if (is_white && !is_attacked(E1, them)) {
@@ -351,9 +355,12 @@ namespace Crystall {
             // kingside
             if (has_castling_right(CASTLING_BK) && 
                 !(occ & BK_CASTLE_EMPTY) && 
-                !is_attacked(F8, them) && !is_attacked(G8, them)) 
+                !is_attacked(F8, them) && !is_attacked(G8, them)) {
+                    // std::cout << "Hi";
+                    add(size, arr, Move(E8, G8, Move::CASTLING));
+                }
                 
-                add(size, arr, Move(E8, G8, Move::CASTLING));
+                
 
             // queenside
             if (has_castling_right(CASTLING_BQ) && 
@@ -364,5 +371,187 @@ namespace Crystall {
         }
 
         return size;
+    }
+
+    void Position::push_undo_info(Move move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
+        move_undo_stack[ply++] = {move, castling_rights, rule50_clock, en_passant_square, captured_piece};
+    }
+
+    MoveUndoInfo& Position::pop_undo_info() {
+        return move_undo_stack[--ply];
+    }
+
+    void Position::make_move(Move move) {
+        Color us = side_to_move;
+        bool is_white = us == WHITE;
+
+        side_to_move = opposite(side_to_move);
+
+        Square from = move.from();
+        Square dest = move.dest();
+        Move::Type flag = move.flag();
+
+        Piece moving_piece = get_piece_on(from);
+        PieceType moving_pt = type_of(moving_piece);
+        Piece captured_piece = flag == Move::EN_PASSANT ? make_piece(PAWN, opposite(us)) : get_piece_on(dest);
+
+        push_undo_info(move, state.castling_rights, state.rule50_clock, state.en_passant_square, captured_piece);
+
+        state.en_passant_square = NO_SQUARE;
+
+        switch (flag) {
+            case Move::NORMAL: {
+                clear_square(dest);
+                clear_square(from);
+                place_piece(dest, moving_piece);
+
+                break;
+            }
+
+            case Move::CASTLING: {
+
+                bool king_side = dest == G1 || dest == G8;
+
+                Square rook_from = is_white ? (king_side ? H1 : A1) : (king_side ? H8 : A8);
+                Square rook_dest = is_white ? (king_side ? F1 : D1) : (king_side ? F8 : D8);
+
+                clear_square(rook_from);
+                clear_square(from);
+
+                place_piece(dest, moving_piece);
+                place_piece(rook_dest, make_piece(ROOK, us));
+
+                break;
+            }
+
+            case Move::EN_PASSANT: {
+
+                Square capture_square = is_white ? Square(dest - 8) : Square(dest + 8);
+
+                clear_square(capture_square);
+                clear_square(from);
+                place_piece(dest, moving_piece);
+
+                break;
+            }
+
+            case Move::DOUBLE_PAWN_PUSH: {
+
+                state.en_passant_square = is_white ? Square(dest - 8) : Square(dest + 8);
+
+                clear_square(from);
+                place_piece(dest, moving_piece);
+
+                break;
+            }
+
+            // Promotions
+            default: {
+
+                constexpr static PieceType PROMO_PIECES[] = {QUEEN, ROOK, BISHOP, KNIGHT};
+
+                clear_square(from);
+                clear_square(dest);
+                place_piece(dest, make_piece(PROMO_PIECES[flag - Move::PROMO_Q], us));
+
+                break;
+            }
+        }
+
+        if (from == A1 || dest == A1) {
+            state.castling_rights &= ~CASTLING_WQ;
+        } if (from == A8 || dest == A8) {
+            state.castling_rights &= ~CASTLING_BQ;
+        } if (from == H1 || dest == H1) {
+            state.castling_rights &= ~CASTLING_WK;
+        } if (from == H8 || dest == H8) {
+            state.castling_rights &= ~CASTLING_BK;
+        }
+
+        if (from == E1) {
+            state.castling_rights &= ~(CASTLING_WK | CASTLING_WQ);
+        } else if (from == E8) {
+            state.castling_rights &= ~(CASTLING_BK | CASTLING_BQ);
+        }
+
+        if (captured_piece != NO_PIECE || moving_pt == PAWN) state.rule50_clock = 0;
+        else state.rule50_clock++;
+    }
+
+    bool Position::attempt_move(Move move) {
+        Color us = side_to_move;
+
+        make_move(move);
+
+        if (is_in_check(us)) {
+            undo_move();
+            return false;
+        }
+
+        return true;
+    }
+
+    void Position::undo_move() {
+
+        side_to_move = opposite(side_to_move);
+
+        Color us = side_to_move;
+        bool is_white = us == WHITE;
+
+        MoveUndoInfo& info = pop_undo_info();
+
+        Move move = info.move;
+        state.castling_rights = info.castling_rights;
+        state.en_passant_square = info.en_passant_square;
+        state.rule50_clock = info.rule50_clock;
+
+        Piece captured_piece = info.captured_piece;
+
+        Square from = move.from();
+        Square dest = move.dest();
+        Move::Type flag = move.flag();
+
+        Piece moving_piece = flag >= Move::PROMO_Q ? make_piece(PAWN, us) : get_piece_on(dest);
+
+        switch (flag) {
+            case Move::DOUBLE_PAWN_PUSH:
+            case Move::NORMAL: {
+                clear_square(dest);
+                place_piece(from, moving_piece);
+
+                if (captured_piece != NO_PIECE) place_piece(dest, captured_piece);
+
+                break;
+            }
+
+            case Move::CASTLING: {
+                bool king_side = dest == G1 || dest == G8;
+
+                Square rook_from = is_white ? (king_side ? H1 : A1) : (king_side ? H8 : A8);
+                Square rook_dest = is_white ? (king_side ? F1 : D1) : (king_side ? F8 : D8);
+
+                clear_square(dest);
+                clear_square(rook_dest);
+                place_piece(from, moving_piece);
+                place_piece(rook_from, make_piece(ROOK, us));
+
+                break;
+            }
+
+            case Move::EN_PASSANT: {
+                clear_square(dest);
+                place_piece(from, moving_piece);
+                place_piece(Square(is_white ? dest - 8 : dest + 8), captured_piece);
+
+                break;
+            }
+
+            default: {
+                clear_square(dest);
+                place_piece(from, moving_piece);
+                place_piece(dest, captured_piece);
+                break;
+            }
+        }
     }
 }
