@@ -2,7 +2,7 @@
 
 #include "types.hpp"
 #include "move.hpp"
-#include "evaluator.hpp"
+#include "eval.hpp"
 #include <string>
 #include <iostream>
 
