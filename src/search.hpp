@@ -4,6 +4,8 @@
 #include "position.hpp"
 
 namespace Crystall::Search {
+    constexpr int MAX_SEARCH_DEPTH = 100;
+
     void start_search(Position& pos, int depth, int movetime);
     void stop_search();
 

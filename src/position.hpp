@@ -2,10 +2,13 @@
 
 #include "types.hpp"
 #include "move.hpp"
+#include "evaluator.hpp"
 #include <string>
 #include <iostream>
 
 namespace Crystall {
+
+    constexpr char StartingPositionFen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     // position representation
     struct GameState {
@@ -43,6 +46,8 @@ namespace Crystall {
         MoveUndoInfo move_undo_stack[1024];
         int ply = 0;
 
+        Evaluation::TaperedScore psqt_scores;
+
         // public functions & constructors
         public:
 
@@ -70,8 +75,11 @@ namespace Crystall {
         // bigger boy functions
         int generate_pseudo_legal_moves(Move[]) const;
         void make_move(Move);
+        void make_move(std::string);
         bool attempt_move(Move);
         void undo_move();
+
+        int evaluate() const;
         
         bool equals(const Position& other) const {
             if (side_to_move != other.side_to_move) return false;

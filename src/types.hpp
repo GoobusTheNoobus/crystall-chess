@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdint>
+#include <cmath>
 
 namespace Crystall {
 
@@ -38,14 +39,14 @@ namespace Crystall {
 
     // helpers
 
-    inline Piece make_piece(PieceType pt, Color c) { return Piece(int(c) * 6 + int(pt)); }
-    inline PieceType type_of(Piece p) { return PieceType(int(p) % 6); }
-    inline Color color_of(Piece p) { return Color(int(p) / 6); }
+    inline Piece make_piece(PieceType pt, Color c) { return Piece(c * 6 + pt); }
+    inline PieceType type_of(Piece p) { return PieceType(p % 6); }
+    inline Color color_of(Piece p) { return Color(p / 6); }
     inline Color opposite(Color c) { return Color(c ^ 1); }
 
     inline Square make_square(int r, int f) { return Square(r * 8 + f); }
-    inline int file_of(Square s) { return int(s) % 8; }
-    inline int rank_of(Square s) { return int(s) / 8; }
+    inline int file_of(Square s) { return s % 8; }
+    inline int rank_of(Square s) { return s / 8; }
 
     inline Square make_square(std::string str) {
 
@@ -71,5 +72,15 @@ namespace Crystall {
         CASTLING_WK = 1, CASTLING_WQ = 2, CASTLING_BK = 4, CASTLING_BQ = 8
     };
 
+    constexpr int DRAW_SCORE = 0, MAX_CP = 10000, MATE_SCORE = 11000, INF = 11001, TIMEOUT = 11002;
 
+    inline std::string score_string(int score) {
+        if (std::abs(score) <= MAX_CP) return "cp " + std::to_string(score);
+
+        int mate_dist = MATE_SCORE - std::abs(score);
+        mate_dist = score > 0 ? mate_dist : -mate_dist;
+        mate_dist = (int)std::ceil(mate_dist / 2.0);
+
+        return "mate " + std::to_string(mate_dist);
+    }
 }

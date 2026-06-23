@@ -1,6 +1,7 @@
 #include "position.hpp"
 #include "move.hpp"
 #include "bit.hpp"
+#include "movelist.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -8,7 +9,6 @@
 
 namespace Crystall {
     constexpr char PieceCharacters[] = "PNBRQKpnbrqk";
-    constexpr char StartingPositionFen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     std::ostream& operator<<(std::ostream& os, const Position& pos) {
         os << pos.to_string();
@@ -99,7 +99,7 @@ namespace Crystall {
 
                 Piece piece = get_piece_on(make_square(r, f));
 
-                if (piece != NO_PIECE) oss << PieceCharacters[int(piece)];
+                if (piece != NO_PIECE) oss << PieceCharacters[piece];
                 else oss << ' ';
 
                 oss << ' ';
@@ -122,6 +122,11 @@ namespace Crystall {
         state.castling_rights = 0;
         state.en_passant_square = NO_SQUARE;
         state.rule50_clock = 0;
+
+        psqt_scores.mg_score = 0;
+        psqt_scores.eg_score = 0;
+
+        ply = 0;
     }
 
     void Position::clear_square(Square square) {
@@ -130,13 +135,23 @@ namespace Crystall {
         Piece piece_already_there = get_piece_on(square);
         Color color = color_of(piece_already_there);
 
-        u64 mask = ~(1ULL << int(square));
+        u64 mask = ~(1ULL << square);
 
-        board[int(square)] = NO_PIECE;
+        board[square] = NO_PIECE;
 
-        piece_bitboards[int(piece_already_there)] &= mask;
-        color_bitboards[int(color)] &= mask;
+        piece_bitboards[piece_already_there] &= mask;
+        color_bitboards[color] &= mask;
         occupancy &= mask;
+
+        // change psqt values
+        PieceType pt = type_of(piece_already_there);
+        if (color == WHITE) {
+            psqt_scores.mg_score -= Evaluation::MGTables[pt][square ^ 56];
+            psqt_scores.eg_score -= Evaluation::EGTables[pt][square ^ 56];
+        } else {
+            psqt_scores.mg_score += Evaluation::MGTables[pt][square];
+            psqt_scores.eg_score += Evaluation::EGTables[pt][square];
+        }
     }
 
     // This assumes that the square is empty
@@ -150,12 +165,22 @@ namespace Crystall {
 
         Color color = color_of(piece);
 
-        u64 mask = 1ULL << int(square);
+        u64 mask = 1ULL << square;
 
-        board[int(square)] = piece;
-        piece_bitboards[int(piece)] |= mask;
-        color_bitboards[int(color)] |= mask;
+        board[square] = piece;
+        piece_bitboards[piece] |= mask;
+        color_bitboards[color] |= mask;
         occupancy |= mask;
+
+        // change psqt values
+        PieceType pt = type_of(piece);
+        if (color == WHITE) {
+            psqt_scores.mg_score += Evaluation::MGTables[pt][square ^ 56];
+            psqt_scores.eg_score += Evaluation::EGTables[pt][square ^ 56];
+        } else {
+            psqt_scores.mg_score -= Evaluation::MGTables[pt][square];
+            psqt_scores.eg_score -= Evaluation::EGTables[pt][square];
+        }
     }
 
     bool Position::is_attacked(Square square, Color by) const {
@@ -448,11 +473,11 @@ namespace Crystall {
             // Promotions
             default: {
 
-                constexpr static PieceType PROMO_PIECES[] = {QUEEN, ROOK, BISHOP, KNIGHT};
+                constexpr static PieceType PromoPieces[] = {QUEEN, ROOK, BISHOP, KNIGHT};
 
                 clear_square(from);
                 clear_square(dest);
-                place_piece(dest, make_piece(PROMO_PIECES[flag - Move::PROMO_Q], us));
+                place_piece(dest, make_piece(PromoPieces[flag - Move::PROMO_Q], us));
 
                 break;
             }
@@ -476,6 +501,17 @@ namespace Crystall {
 
         if (captured_piece != NO_PIECE || moving_pt == PAWN) state.rule50_clock = 0;
         else state.rule50_clock++;
+    }
+
+    void Position::make_move(std::string move_str) {
+        MoveList list(*this);
+
+        for (int i = 0; i < list.size(); ++i) {
+            if (list[i].to_string() == move_str) {
+                make_move(list[i]);
+                return;
+            }
+        }
     }
 
     bool Position::attempt_move(Move move) {
@@ -553,5 +589,14 @@ namespace Crystall {
                 break;
             }
         }
+    }
+
+    int Position::evaluate() const {
+        int phase = Evaluation::calculate_phase(piece_bitboards);
+
+        int score;
+        score = psqt_scores.get_score(phase);
+
+        return side_to_move == WHITE ? score : -score;
     }
 }
