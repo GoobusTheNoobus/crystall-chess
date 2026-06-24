@@ -14,17 +14,17 @@ namespace Crystall {
 
     namespace Bitboards {
 
-        constexpr u64 RankBB[RANK_NB] = {
+        constexpr u64 RankBB[RankNB] = {
             0x00000000000000FFULL, 0x000000000000FF00ULL, 0x0000000000FF0000ULL, 0x00000000FF000000ULL,
             0x000000FF00000000ULL, 0x0000FF0000000000ULL, 0x00FF000000000000ULL, 0xFF00000000000000ULL,
         };
 
-        constexpr u64 FileBB[FILE_NB] = {
+        constexpr u64 FileBB[FileNB] = {
             0x0101010101010101ULL, 0x0202020202020202ULL, 0x0404040404040404ULL, 0x0808080808080808ULL,
             0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
         };
 
-        constexpr u64 SquareBB[SQUARE_NB] = {
+        constexpr u64 SquareBB[SquareNB] = {
             1ULL <<  0, 1ULL <<  1, 1ULL <<  2, 1ULL <<  3, 1ULL <<  4, 1ULL <<  5, 1ULL <<  6, 1ULL <<  7, 
             1ULL <<  8, 1ULL <<  9, 1ULL << 10, 1ULL << 11, 1ULL << 12, 1ULL << 13, 1ULL << 14, 1ULL << 15, 
             1ULL << 16, 1ULL << 17, 1ULL << 18, 1ULL << 19, 1ULL << 20, 1ULL << 21, 1ULL << 22, 1ULL << 23, 

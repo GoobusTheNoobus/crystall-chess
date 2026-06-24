@@ -8,11 +8,7 @@ namespace Crystall {
 
     using u64 = uint64_t;
 
-    // enums & constants
-
-    constexpr int FILE_NB = 8, 
-                  RANK_NB = 8, 
-                  SQUARE_NB = FILE_NB * RANK_NB;
+    constexpr int FileNB = 8, RankNB = 8, SquareNB = FileNB * RankNB;
     enum Square : uint8_t {
         A1, B1, C1, D1, E1, F1, G1, H1,
         A2, B2, C2, D2, E2, F2, G2, H2,
@@ -23,18 +19,16 @@ namespace Crystall {
         A7, B7, C7, D7, E7, F7, G7, H7,
         A8, B8, C8, D8, E8, F8, G8, H8,
 
-        NO_SQUARE
+        NoSquare
     };
 
-    constexpr int COLOR_NB = 2, 
-                  PIECETYPE_NB = 6, 
-                  PIECE_NB = COLOR_NB * PIECETYPE_NB;
-    enum Color : uint8_t { WHITE, BLACK };
-    enum PieceType : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+    constexpr int ColorNB = 2, PieceTypeNB = 6, PieceNB = ColorNB * PieceTypeNB;
+    enum Color : uint8_t { White, Black };
+    enum PieceType : uint8_t { Pawn, Knight, Bishop, Rook, Queen, King };
     enum Piece : uint8_t {
-        WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
-        BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
-        NO_PIECE
+        WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing,
+        BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing,
+        NoPiece
     };
 
     // helpers
@@ -56,7 +50,7 @@ namespace Crystall {
         int rank = rc - '1';
         int file = fc - 'a';
 
-        if (unsigned(rank) > 7 || unsigned(file) > 7) return NO_SQUARE;
+        if (unsigned(rank) > 7 || unsigned(file) > 7) return NoSquare;
 
         return make_square(rank, file);
     }
@@ -68,16 +62,14 @@ namespace Crystall {
         return {fc, rc};
     }
 
-    enum Castling : int {
-        CASTLING_WK = 1, CASTLING_WQ = 2, CASTLING_BK = 4, CASTLING_BQ = 8
-    };
-
-    constexpr int DRAW_SCORE = 0, MAX_CP = 10000, MATE_SCORE = 11000, INF = 11001, TIMEOUT = 11002;
+    constexpr int CastlingWK = 1, CastlingWQ = 2, CastlingBK = 4, CastlingBQ = 8;
+    constexpr int DrawScore = 0, MaxCentipawn = 10000, MateScore = 11000, Infinity = 11001, Timeout = 11002;
 
     inline std::string score_string(int score) {
-        if (std::abs(score) <= MAX_CP) return "cp " + std::to_string(score);
+        if (std::abs(score) <= MaxCentipawn) return "cp " + std::to_string(score);
 
-        int mate_dist = MATE_SCORE - std::abs(score);
+        int mate_dist = MateScore - std::abs(score);
+        
         mate_dist = score > 0 ? mate_dist : -mate_dist;
         mate_dist = (int)std::ceil(mate_dist / 2.0);
 

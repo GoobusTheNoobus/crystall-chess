@@ -5,17 +5,17 @@
 namespace Crystall {
     struct Move {
         enum Type {
-            NORMAL,
+            Normal,
             // double pawn pushes result in an active en passant square,
             // so it's more efficient to have a seperate move flag
-            DOUBLE_PAWN_PUSH, 
-            CASTLING,
-            EN_PASSANT,
-            PROMO_Q,
-            PROMO_R,
-            PROMO_B,
-            PROMO_N,
-            NONE
+            DoublePawnPush, 
+            Castling,
+            EnPassant,
+            PromoQ,
+            PromoR,
+            PromoB,
+            PromoN,
+            None
         };
 
         private:
@@ -30,7 +30,7 @@ namespace Crystall {
         inline Type flag() { return flag_; }
 
         inline Move(Square from, Square dest, Type flag) : from_(from), dest_(dest), flag_(flag) {}
-        inline Move() : from_(NO_SQUARE), dest_(NO_SQUARE), flag_(NONE) {}
+        inline Move() : from_(NoSquare), dest_(NoSquare), flag_(None) {}
 
         constexpr static char PromoCharacters[4] = {'q', 'r', 'b', 'n'};
 
@@ -38,8 +38,8 @@ namespace Crystall {
             std::string from_str = square_to_string(from_);
             std::string dest_str = square_to_string(dest_);
 
-            if (flag_ >= PROMO_Q) {
-                return from_str + dest_str + PromoCharacters[flag_ - PROMO_Q];
+            if (flag_ >= PromoQ) {
+                return from_str + dest_str + PromoCharacters[flag_ - PromoQ];
             }
 
             return from_str + dest_str;

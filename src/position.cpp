@@ -43,7 +43,7 @@ namespace Crystall {
                 continue;
             }
 
-            Piece p = NO_PIECE;
+            Piece p = NoPiece;
 
             for (int i = 0; i < 13; ++i) {
                 if (PieceCharacters[i] == c) 
@@ -57,17 +57,17 @@ namespace Crystall {
         std::string fen_side_part;
         if (!(iss >> fen_side_part)) return;
 
-        side_to_move = fen_side_part == "w" ? WHITE : BLACK;
+        side_to_move = fen_side_part == "w" ? White : Black;
 
         std::string fen_castling_part;
         if (!(iss >> fen_castling_part)) return;
 
         for (char c : fen_castling_part) {
             switch (c) {
-                case 'K': state.castling_rights |= CASTLING_WK; break;
-                case 'Q': state.castling_rights |= CASTLING_WQ; break;
-                case 'k': state.castling_rights |= CASTLING_BK; break;
-                case 'q': state.castling_rights |= CASTLING_BQ; break;
+                case 'K': state.castling_rights |= CastlingWK; break;
+                case 'Q': state.castling_rights |= CastlingWQ; break;
+                case 'k': state.castling_rights |= CastlingBK; break;
+                case 'q': state.castling_rights |= CastlingBQ; break;
             }
         }
 
@@ -99,7 +99,7 @@ namespace Crystall {
 
                 Piece piece = get_piece_on(make_square(r, f));
 
-                if (piece != NO_PIECE) oss << PieceCharacters[piece];
+                if (piece != NoPiece) oss << PieceCharacters[piece];
                 else oss << ' ';
 
                 oss << ' ';
@@ -113,31 +113,32 @@ namespace Crystall {
     }
 
     void Position::clear() {
-        for (int i = 0; i < SQUARE_NB; ++i) board[i] = NO_PIECE;      
-        for (int i = 0; i < PIECE_NB; ++i) piece_bitboards[i] = 0;
-        for (int i = 0; i < COLOR_NB; ++i) color_bitboards[i] = 0;
+        for (int i = 0; i < SquareNB; ++i) board[i] = NoPiece;      
+        for (int i = 0; i < PieceNB; ++i) piece_bitboards[i] = 0;
+        for (int i = 0; i < ColorNB; ++i) color_bitboards[i] = 0;
         occupancy = 0;
         
-        side_to_move = WHITE;
+        side_to_move = White;
         state.castling_rights = 0;
-        state.en_passant_square = NO_SQUARE;
+        state.en_passant_square = NoSquare;
         state.rule50_clock = 0;
 
         psqt_scores.mg_score = 0;
         psqt_scores.eg_score = 0;
 
         ply = 0;
+        hash = 0;
     }
 
     void Position::clear_square(Square square) {
-        if (get_piece_on(square) == NO_PIECE) return;
+        if (get_piece_on(square) == NoPiece) return;
 
         Piece piece_already_there = get_piece_on(square);
         Color color = color_of(piece_already_there);
 
         u64 mask = ~(1ULL << square);
 
-        board[square] = NO_PIECE;
+        board[square] = NoPiece;
 
         piece_bitboards[piece_already_there] &= mask;
         color_bitboards[color] &= mask;
@@ -145,20 +146,23 @@ namespace Crystall {
 
         // change psqt values
         PieceType pt = type_of(piece_already_there);
-        if (color == WHITE) {
+        if (color == White) {
             psqt_scores.mg_score -= Evaluation::MGTables[pt][square ^ 56];
             psqt_scores.eg_score -= Evaluation::EGTables[pt][square ^ 56];
         } else {
             psqt_scores.mg_score += Evaluation::MGTables[pt][square];
             psqt_scores.eg_score += Evaluation::EGTables[pt][square];
         }
+
+        // update hash
+        hash ^= Zobrist::PieceSquareKeys[piece_already_there][square];
     }
 
     // This assumes that the square is empty
     // If you are not sure that the square is empty, 
     // clear it first in case
     void Position::place_piece(Square square, Piece piece) {
-        if (piece == NO_PIECE) {
+        if (piece == NoPiece) {
             clear_square(square);
             return;
         }
@@ -174,28 +178,31 @@ namespace Crystall {
 
         // change psqt values
         PieceType pt = type_of(piece);
-        if (color == WHITE) {
+        if (color == White) {
             psqt_scores.mg_score += Evaluation::MGTables[pt][square ^ 56];
             psqt_scores.eg_score += Evaluation::EGTables[pt][square ^ 56];
         } else {
             psqt_scores.mg_score -= Evaluation::MGTables[pt][square];
             psqt_scores.eg_score -= Evaluation::EGTables[pt][square];
         }
+
+        // update hash
+        hash ^= Zobrist::PieceSquareKeys[piece][square];
     }
 
     bool Position::is_attacked(Square square, Color by) const {
 
-        if (Bitboards::pawn_attacks(square, opposite(by)) & get_bitboard(PAWN, by)) return true; 
-        if (Bitboards::knight_attacks(square) & get_bitboard(KNIGHT, by)) return true;
-        if (Bitboards::bishop_attack(square, occupancy) & (get_bitboard(BISHOP, by) | get_bitboard(QUEEN, by))) return true;
-        if (Bitboards::rook_attack(square, occupancy) & (get_bitboard(ROOK, by) | get_bitboard(QUEEN, by))) return true;
-        if (Bitboards::king_attacks(square) & (get_bitboard(KING, by))) return true;
+        if (Bitboards::pawn_attacks(square, opposite(by)) & get_bitboard(Pawn, by)) return true; 
+        if (Bitboards::knight_attacks(square) & get_bitboard(Knight, by)) return true;
+        if (Bitboards::bishop_attack(square, occupancy) & (get_bitboard(Bishop, by) | get_bitboard(Queen, by))) return true;
+        if (Bitboards::rook_attack(square, occupancy) & (get_bitboard(Rook, by) | get_bitboard(Queen, by))) return true;
+        if (Bitboards::king_attacks(square) & (get_bitboard(King, by))) return true;
 
         return false;
     }
 
     bool Position::is_in_check(Color color) const {
-        return is_attacked(Square(ctz(get_bitboard(KING, color))), opposite(color));
+        return is_attacked(Square(ctz(get_bitboard(King, color))), opposite(color));
     }
 
     bool Position::is_in_check() const {
@@ -218,10 +225,10 @@ namespace Crystall {
         void extract_pawn_promo(int& i, Move* arr, u64 bb, int offset) {
             while (bb) {
                 int lsb = poplsb(bb);
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PROMO_Q));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PROMO_R));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PROMO_B));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PROMO_N));
+                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoQ));
+                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoR));
+                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoB));
+                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoN));
             }
         }
     }
@@ -231,10 +238,10 @@ namespace Crystall {
         int size = 0;
         Color us = side_to_move;
         Color them = opposite(us);
-        bool is_white = us == WHITE;
+        bool is_white = us == White;
 
         // Pawn moves
-        u64 pawns = get_bitboard(PAWN, us);
+        u64 pawns = get_bitboard(Pawn, us);
         u64 occ   = occupancy;
         u64 enemy = get_bitboard(them);
 
@@ -259,10 +266,10 @@ namespace Crystall {
         u64 right_promo_bb = right_capture_bb & rank8_from_bottom;
         u64 right_normal_bb = right_capture_bb & ~rank8_from_bottom;
 
-        extract_pawn(size, arr, single_push_normal_bb, single_push_offset, Move::NORMAL);
-        extract_pawn(size, arr, double_push_bb, double_push_offset, Move::DOUBLE_PAWN_PUSH);
-        extract_pawn(size, arr, right_normal_bb, right_capture_offset, Move::NORMAL);
-        extract_pawn(size, arr, left_normal_bb, left_capture_offset, Move::NORMAL);
+        extract_pawn(size, arr, single_push_normal_bb, single_push_offset, Move::Normal);
+        extract_pawn(size, arr, double_push_bb, double_push_offset, Move::DoublePawnPush);
+        extract_pawn(size, arr, right_normal_bb, right_capture_offset, Move::Normal);
+        extract_pawn(size, arr, left_normal_bb, left_capture_offset, Move::Normal);
 
         extract_pawn_promo(size, arr, single_push_promo_bb, single_push_offset);
         extract_pawn_promo(size, arr, left_promo_bb, left_capture_offset);
@@ -270,16 +277,16 @@ namespace Crystall {
 
         Square ep = get_en_passant();
 
-        if (ep != NO_SQUARE) {
+        if (ep != NoSquare) {
             u64 ep_pawns = pawns & Bitboards::pawn_attacks(ep, them);
             while (ep_pawns) {
                 int lsb = poplsb(ep_pawns);
-                add(size, arr, Move(Square(lsb), ep, Move::EN_PASSANT));
+                add(size, arr, Move(Square(lsb), ep, Move::EnPassant));
             }
         }
 
         // Knights
-        u64 knights = get_bitboard(KNIGHT, us);
+        u64 knights = get_bitboard(Knight, us);
 
         while (knights) {
             Square from = Square(poplsb(knights));
@@ -288,12 +295,12 @@ namespace Crystall {
 
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, arr, Move(from, to, Move::NORMAL));
+                add(size, arr, Move(from, to, Move::Normal));
             }
         }
 
         // Bishops
-        u64 bishops = get_bitboard(BISHOP, us);
+        u64 bishops = get_bitboard(Bishop, us);
 
         while (bishops) {
             Square from = Square(poplsb(bishops));
@@ -302,12 +309,12 @@ namespace Crystall {
 
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, arr, Move(from, to, Move::NORMAL));
+                add(size, arr, Move(from, to, Move::Normal));
             }
         }
 
         // Rooks
-        u64 rooks = get_bitboard(ROOK, us);
+        u64 rooks = get_bitboard(Rook, us);
 
         while (rooks) {
             Square from = Square(poplsb(rooks));
@@ -316,12 +323,12 @@ namespace Crystall {
 
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, arr, Move(from, to, Move::NORMAL));
+                add(size, arr, Move(from, to, Move::Normal));
             }
         }
 
         // Queens
-        u64 queens = get_bitboard(QUEEN, us);
+        u64 queens = get_bitboard(Queen, us);
 
         while (queens) {
             Square from = Square(poplsb(queens));
@@ -330,12 +337,12 @@ namespace Crystall {
 
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, arr, Move(from, to, Move::NORMAL));
+                add(size, arr, Move(from, to, Move::Normal));
             }
         }
 
         // King
-        u64 king = get_bitboard(KING, us);
+        u64 king = get_bitboard(King, us);
 
         if (king) {
             Square from = Square(poplsb(king));
@@ -344,7 +351,7 @@ namespace Crystall {
 
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, arr, Move(from, to, Move::NORMAL));
+                add(size, arr, Move(from, to, Move::Normal));
             }
         } else {
             std::cerr << "NO KING ON BOARD" << std::endl;
@@ -352,10 +359,10 @@ namespace Crystall {
             exit(-1);
         }
 
-        constexpr static u64 WK_CASTLE_EMPTY = Bitboards::SquareBB[F1] | Bitboards::SquareBB[G1];
-        constexpr static u64 WQ_CASTLE_EMPTY = Bitboards::SquareBB[D1] | Bitboards::SquareBB[C1] | Bitboards::SquareBB[B1];
-        constexpr static u64 BK_CASTLE_EMPTY = Bitboards::SquareBB[F8] | Bitboards::SquareBB[G8];
-        constexpr static u64 BQ_CASTLE_EMPTY = Bitboards::SquareBB[D8] | Bitboards::SquareBB[C8] | Bitboards::SquareBB[B8];
+        constexpr static u64 WKCastleEmpty = Bitboards::SquareBB[F1] | Bitboards::SquareBB[G1];
+        constexpr static u64 WQCastleEmpty = Bitboards::SquareBB[D1] | Bitboards::SquareBB[C1] | Bitboards::SquareBB[B1];
+        constexpr static u64 BKCastleEmpty = Bitboards::SquareBB[F8] | Bitboards::SquareBB[G8];
+        constexpr static u64 BQCastleEmpty = Bitboards::SquareBB[D8] | Bitboards::SquareBB[C8] | Bitboards::SquareBB[B8];
 
         // std::cout << occ << std::endl;
         // std::cout << BK_CASTLE_EMPTY << std::endl;
@@ -363,43 +370,43 @@ namespace Crystall {
         // castling
         if (is_white && !is_attacked(E1, them)) {
             // kingside
-            if (has_castling_right(CASTLING_WK) && 
-                !(occ & WK_CASTLE_EMPTY) && 
+            if (has_castling_right(CastlingWK) && 
+                !(occ & WKCastleEmpty) && 
                 !is_attacked(F1, them) && !is_attacked(G1, them)) 
 
-                add(size, arr, Move(E1, G1, Move::CASTLING));
+                add(size, arr, Move(E1, G1, Move::Castling));
 
             // queenside
-            if (has_castling_right(CASTLING_WQ) && 
-                !(occ & WQ_CASTLE_EMPTY) && 
+            if (has_castling_right(CastlingWQ) && 
+                !(occ & WQCastleEmpty) && 
                 !is_attacked(D1, them) && !is_attacked(C1, them)) 
                 
-                add(size, arr, Move(E1, C1, Move::CASTLING));
+                add(size, arr, Move(E1, C1, Move::Castling));
 
         } else if (!is_white && !is_attacked(E8, them)) {
             // kingside
-            if (has_castling_right(CASTLING_BK) && 
-                !(occ & BK_CASTLE_EMPTY) && 
+            if (has_castling_right(CastlingBK) && 
+                !(occ & BKCastleEmpty) && 
                 !is_attacked(F8, them) && !is_attacked(G8, them)) {
                     // std::cout << "Hi";
-                    add(size, arr, Move(E8, G8, Move::CASTLING));
+                    add(size, arr, Move(E8, G8, Move::Castling));
                 }
                 
-                
-
             // queenside
-            if (has_castling_right(CASTLING_BQ) && 
-                !(occ & BQ_CASTLE_EMPTY) && 
+            if (has_castling_right(CastlingBQ) && 
+                !(occ & BQCastleEmpty) && 
                 !is_attacked(D8, them) && !is_attacked(C8, them)) 
                 
-                add(size, arr, Move(E8, C8, Move::CASTLING));
+                add(size, arr, Move(E8, C8, Move::Castling));
         }
 
         return size;
     }
 
-    void Position::push_undo_info(Move move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
-        move_undo_stack[ply++] = {move, castling_rights, rule50_clock, en_passant_square, captured_piece};
+    // pushes info into the stacks that are needed with making move
+    void Position::push_move_stacks(u64 key, Move move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
+        // hash_stack[ply] = get_key();
+        move_undo_stack[ply++] = { key, move, castling_rights, rule50_clock, en_passant_square, captured_piece };
     }
 
     MoveUndoInfo& Position::pop_undo_info() {
@@ -408,9 +415,7 @@ namespace Crystall {
 
     void Position::make_move(Move move) {
         Color us = side_to_move;
-        bool is_white = us == WHITE;
-
-        side_to_move = opposite(side_to_move);
+        bool is_white = us == White;
 
         Square from = move.from();
         Square dest = move.dest();
@@ -418,23 +423,34 @@ namespace Crystall {
 
         Piece moving_piece = get_piece_on(from);
         PieceType moving_pt = type_of(moving_piece);
-        Piece captured_piece = flag == Move::EN_PASSANT ? make_piece(PAWN, opposite(us)) : get_piece_on(dest);
+        Piece captured_piece = flag == Move::EnPassant
+            ? make_piece(Pawn, opposite(us))
+            : get_piece_on(dest);
 
-        push_undo_info(move, state.castling_rights, state.rule50_clock, state.en_passant_square, captured_piece);
+        push_move_stacks(hash, move, state.castling_rights, state.rule50_clock,
+                        state.en_passant_square, captured_piece);
 
-        state.en_passant_square = NO_SQUARE;
+        // remove old side / EP / castling state from hash
+        hash ^= Zobrist::SideKey;
+
+        if (state.en_passant_square != NoSquare)
+            hash ^= Zobrist::EnPassantKeys[file_of(state.en_passant_square)];
+
+        if (state.castling_rights != 0)
+            hash ^= Zobrist::CastlingKeys[state.castling_rights];
+
+        side_to_move = opposite(side_to_move);
+        state.en_passant_square = NoSquare;
 
         switch (flag) {
-            case Move::NORMAL: {
+            case Move::Normal: {
                 clear_square(dest);
                 clear_square(from);
                 place_piece(dest, moving_piece);
-
                 break;
             }
 
-            case Move::CASTLING: {
-
+            case Move::Castling: {
                 bool king_side = dest == G1 || dest == G8;
 
                 Square rook_from = is_white ? (king_side ? H1 : A1) : (king_side ? H8 : A8);
@@ -444,62 +460,54 @@ namespace Crystall {
                 clear_square(from);
 
                 place_piece(dest, moving_piece);
-                place_piece(rook_dest, make_piece(ROOK, us));
-
+                place_piece(rook_dest, make_piece(Rook, us));
                 break;
             }
 
-            case Move::EN_PASSANT: {
-
+            case Move::EnPassant: {
                 Square capture_square = is_white ? Square(dest - 8) : Square(dest + 8);
 
                 clear_square(capture_square);
                 clear_square(from);
                 place_piece(dest, moving_piece);
-
                 break;
             }
 
-            case Move::DOUBLE_PAWN_PUSH: {
-
+            case Move::DoublePawnPush: {
                 state.en_passant_square = is_white ? Square(dest - 8) : Square(dest + 8);
 
                 clear_square(from);
                 place_piece(dest, moving_piece);
-
                 break;
             }
 
-            // Promotions
-            default: {
-
-                constexpr static PieceType PromoPieces[] = {QUEEN, ROOK, BISHOP, KNIGHT};
+            default: { // promotions
+                constexpr static PieceType PromoPieces[] = {Queen, Rook, Bishop, Knight};
 
                 clear_square(from);
                 clear_square(dest);
-                place_piece(dest, make_piece(PromoPieces[flag - Move::PROMO_Q], us));
-
+                place_piece(dest, make_piece(PromoPieces[flag - Move::PromoQ], us));
                 break;
             }
         }
 
-        if (from == A1 || dest == A1) {
-            state.castling_rights &= ~CASTLING_WQ;
-        } if (from == A8 || dest == A8) {
-            state.castling_rights &= ~CASTLING_BQ;
-        } if (from == H1 || dest == H1) {
-            state.castling_rights &= ~CASTLING_WK;
-        } if (from == H8 || dest == H8) {
-            state.castling_rights &= ~CASTLING_BK;
-        }
+        // update castling rights
+        if (from == A1 || dest == A1) state.castling_rights &= ~CastlingWQ;
+        if (from == A8 || dest == A8) state.castling_rights &= ~CastlingBQ;
+        if (from == H1 || dest == H1) state.castling_rights &= ~CastlingWK;
+        if (from == H8 || dest == H8) state.castling_rights &= ~CastlingBK;
 
-        if (from == E1) {
-            state.castling_rights &= ~(CASTLING_WK | CASTLING_WQ);
-        } else if (from == E8) {
-            state.castling_rights &= ~(CASTLING_BK | CASTLING_BQ);
-        }
+        if (from == E1) state.castling_rights &= ~(CastlingWK | CastlingWQ);
+        else if (from == E8) state.castling_rights &= ~(CastlingBK | CastlingBQ);
 
-        if (captured_piece != NO_PIECE || moving_pt == PAWN) state.rule50_clock = 0;
+        // add new EP / castling state to hash
+        if (state.en_passant_square != NoSquare)
+            hash ^= Zobrist::EnPassantKeys[file_of(state.en_passant_square)];
+
+        if (state.castling_rights != 0)
+            hash ^= Zobrist::CastlingKeys[state.castling_rights];
+
+        if (captured_piece != NoPiece || moving_pt == Pawn) state.rule50_clock = 0;
         else state.rule50_clock++;
     }
 
@@ -528,11 +536,10 @@ namespace Crystall {
     }
 
     void Position::undo_move() {
-
         side_to_move = opposite(side_to_move);
 
         Color us = side_to_move;
-        bool is_white = us == WHITE;
+        bool is_white = us == White;
 
         MoveUndoInfo& info = pop_undo_info();
 
@@ -547,20 +554,18 @@ namespace Crystall {
         Square dest = move.dest();
         Move::Type flag = move.flag();
 
-        Piece moving_piece = flag >= Move::PROMO_Q ? make_piece(PAWN, us) : get_piece_on(dest);
+        Piece moving_piece = flag >= Move::PromoQ ? make_piece(Pawn, us) : get_piece_on(dest);
 
         switch (flag) {
-            case Move::DOUBLE_PAWN_PUSH:
-            case Move::NORMAL: {
+            case Move::DoublePawnPush:
+            case Move::Normal: {
                 clear_square(dest);
                 place_piece(from, moving_piece);
-
-                if (captured_piece != NO_PIECE) place_piece(dest, captured_piece);
-
+                if (captured_piece != NoPiece) place_piece(dest, captured_piece);
                 break;
             }
 
-            case Move::CASTLING: {
+            case Move::Castling: {
                 bool king_side = dest == G1 || dest == G8;
 
                 Square rook_from = is_white ? (king_side ? H1 : A1) : (king_side ? H8 : A8);
@@ -569,16 +574,14 @@ namespace Crystall {
                 clear_square(dest);
                 clear_square(rook_dest);
                 place_piece(from, moving_piece);
-                place_piece(rook_from, make_piece(ROOK, us));
-
+                place_piece(rook_from, make_piece(Rook, us));
                 break;
             }
 
-            case Move::EN_PASSANT: {
+            case Move::EnPassant: {
                 clear_square(dest);
                 place_piece(from, moving_piece);
                 place_piece(Square(is_white ? dest - 8 : dest + 8), captured_piece);
-
                 break;
             }
 
@@ -589,6 +592,8 @@ namespace Crystall {
                 break;
             }
         }
+
+        hash = info.key;
     }
 
     int Position::evaluate() const {
@@ -597,6 +602,12 @@ namespace Crystall {
         int score;
         score = psqt_scores.get_score(phase);
 
-        return side_to_move == WHITE ? score : -score;
+        return side_to_move == White ? score : -score;
     }
+
+
+    u64 Position::get_key() const {
+        
+        return hash;
+    }    
 }

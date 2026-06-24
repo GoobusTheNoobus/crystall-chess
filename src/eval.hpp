@@ -1,43 +1,39 @@
 #pragma once
 
 #include "bit.hpp"
-#include <chrono>
-#include <iostream>
-
-using namespace std::chrono;
 
 namespace Crystall {
 
     namespace Evaluation {
 
-        constexpr int MAX_PHASE = 24;
-        constexpr static int PhaseInc[PIECE_NB] = {0, 0, 1, 1, 1, 1, 2, 2, 4, 4, 0, 0}; 
+        constexpr int MaxPhase = 24;
+        constexpr static int PhaseInc[PieceNB] = {0, 0, 1, 1, 1, 1, 2, 2, 4, 4, 0, 0}; 
 
         struct TaperedScore {
             int mg_score = 0;
             int eg_score = 0;
 
             inline int get_score(int phase) const {
-                return (mg_score * phase + eg_score * (MAX_PHASE)) / MAX_PHASE;
+                return (mg_score * phase + eg_score * (MaxPhase)) / MaxPhase;
             }
         };
 
         inline int calculate_phase(const u64 bitboards[]) {
             int phase = 0;
 
-            for (Piece p = WHITE_KNIGHT; p <= BLACK_QUEEN; p = Piece(p + 1)) {
+            for (Piece p = WhiteKnight; p <= BlackQueen; p = Piece(p + 1)) {
                 phase += PhaseInc[p] * cnt(bitboards[p]);
             }
 
-            return std::min(MAX_PHASE, phase);
+            return std::min(MaxPhase, phase);
         }
 
-        constexpr int PAWN_VALUE_MG = 100, KNIGHT_VALUE_MG = 340, BISHOP_VALUE_MG = 360, ROOK_VALUE_MG = 500, QUEEN_VALUE_MG = 900,
-                      PAWN_VALUE_EG = 120, KNIGHT_VALUE_EG = 300, BISHOP_VALUE_EG = 315, ROOK_VALUE_EG = 525, QUEEN_VALUE_EG = 975;
-        constexpr int MGValues[PIECETYPE_NB] = {PAWN_VALUE_MG, KNIGHT_VALUE_MG, BISHOP_VALUE_MG, ROOK_VALUE_MG, QUEEN_VALUE_MG};
-        constexpr int EGValues[PIECETYPE_NB] = {PAWN_VALUE_EG, KNIGHT_VALUE_EG, BISHOP_VALUE_EG, ROOK_VALUE_EG, QUEEN_VALUE_EG};
+        constexpr int PawnValueMG = 100, KnightValueMG = 340, BishopValueMG = 360, RookValueMG = 500, QueenValueMG = 900,
+                      PawnValueEG = 120, KnightValueEG = 300, BishopValueEG = 315, RookValueEG = 525, QueenValueEG = 975;
+        constexpr int MGValues[PieceTypeNB] = {PawnValueMG, KnightValueMG, BishopValueMG, RookValueMG, QueenValueMG};
+        constexpr int EGValues[PieceTypeNB] = {PawnValueEG, KnightValueEG, BishopValueEG, RookValueEG, QueenValueEG};
 
-        inline int MGTables[6][64] = {
+        inline int MGTables[PieceTypeNB][SquareNB] = {
             // pawn
             {
                  0,  0,  0,  0,  0,  0,  0,  0,
@@ -111,7 +107,7 @@ namespace Crystall {
             }
         };
 
-        inline int EGTables[6][64] = {
+        inline int EGTables[PieceTypeNB][SquareNB] = {
             // pawn
             {
                  0,  0,  0,  0,  0,  0,  0,  0,
@@ -187,20 +183,12 @@ namespace Crystall {
 
         inline void init() {
 
-            std::cout << "Initializing Evaluation\n";
-
-            auto start = steady_clock::now();
-
             for (int p = 0; p < 6; ++p) {
                 for (int squ = 0; squ < 64; ++squ) {
                     MGTables[p][squ] += MGValues[p];
                     EGTables[p][squ] += EGValues[p];
                 }
             }
-
-            auto end = steady_clock::now();
-
-            std::cout << "Evaluation Initialized in " << (duration_cast<nanoseconds>(end - start).count() / 1'000'000.0) << " ms\n";
         }
     }
 }

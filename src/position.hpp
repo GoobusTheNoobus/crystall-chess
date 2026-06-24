@@ -5,14 +5,45 @@
 #include "eval.hpp"
 #include <string>
 #include <iostream>
+#include <random>
 
 namespace Crystall {
+
+    namespace Zobrist {
+
+        inline u64 PieceSquareKeys[PieceNB][SquareNB];
+        inline u64 CastlingKeys[16];
+        inline u64 EnPassantKeys[8];
+        inline u64 SideKey;
+
+        // fill all variables with random values
+        inline void init() {
+            std::mt19937_64 rng(67);
+
+            for (int i = 0; i < PieceNB; ++i) {
+                for (int j = 0; j < SquareNB; ++j) {
+                    PieceSquareKeys[i][j] = rng();
+                }
+            }
+
+            for (int i = 0; i < 16; ++i) {
+                CastlingKeys[i] = rng();
+            }
+
+            for (int i = 0; i < 8; ++i) {
+                EnPassantKeys[i] = rng();
+            }
+
+            SideKey = rng();
+
+        }
+    }
 
     constexpr char StartingPositionFen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     // position representation
     struct GameState {
-        Square en_passant_square = NO_SQUARE;
+        Square en_passant_square = NoSquare;
         int castling_rights = 0;
         int rule50_clock = 0;
     };
@@ -20,6 +51,7 @@ namespace Crystall {
     // a struct that represents the information needed to undo 
     // a move. should be stored in stack
     struct MoveUndoInfo {
+        u64 key;
         Move move;
         int castling_rights;
         int rule50_clock;
@@ -33,14 +65,15 @@ namespace Crystall {
         private:
 
         // board representation
-        Piece board[SQUARE_NB];
-        u64 piece_bitboards[PIECE_NB];
-        u64 color_bitboards[COLOR_NB];
+        Piece board[SquareNB];
+        u64 piece_bitboards[PieceNB];
+        u64 color_bitboards[ColorNB];
         u64 occupancy = 0;
 
         // game states
         Color side_to_move;
         GameState state;
+        u64 hash = 0;
 
         // stack(s)
         MoveUndoInfo move_undo_stack[1024];
@@ -80,97 +113,9 @@ namespace Crystall {
         void undo_move();
 
         int evaluate() const;
-        
-        bool equals(const Position& other) const {
-            if (side_to_move != other.side_to_move) return false;
-            if (state.en_passant_square != other.state.en_passant_square) return false;
-            if (state.castling_rights != other.state.castling_rights) return false;
-            if (state.rule50_clock != other.state.rule50_clock) return false;
-            if (occupancy != other.occupancy) return false;
-            if (ply != other.ply) return false;
 
-            for (int i = 0; i < SQUARE_NB; ++i) {
-                if (board[i] != other.board[i]) return false;
-            }
-
-            for (int i = 0; i < PIECE_NB; ++i) {
-                if (piece_bitboards[i] != other.piece_bitboards[i]) return false;
-            }
-
-            for (int i = 0; i < COLOR_NB; ++i) {
-                if (color_bitboards[i] != other.color_bitboards[i]) return false;
-            }
-
-            return true;
-        }
-
-        void print_differences(const Position& other) const {
-            bool same = true;
-
-            if (side_to_move != other.side_to_move) {
-                std::cout << "side_to_move differs: "
-                        << int(side_to_move) << " vs " << int(other.side_to_move) << '\n';
-                same = false;
-            }
-
-            if (state.en_passant_square != other.state.en_passant_square) {
-                std::cout << "en_passant_square differs: "
-                        << int(state.en_passant_square) << " vs " << int(other.state.en_passant_square) << '\n';
-                same = false;
-            }
-
-            if (state.castling_rights != other.state.castling_rights) {
-                std::cout << "castling_rights differs: "
-                        << state.castling_rights << " vs " << other.state.castling_rights << '\n';
-                same = false;
-            }
-
-            if (state.rule50_clock != other.state.rule50_clock) {
-                std::cout << "rule50_clock differs: "
-                        << state.rule50_clock << " vs " << other.state.rule50_clock << '\n';
-                same = false;
-            }
-
-            if (occupancy != other.occupancy) {
-                std::cout << "occupancy differs: "
-                        << occupancy << " vs " << other.occupancy << '\n';
-                same = false;
-            }
-
-            if (ply != other.ply) {
-                std::cout << "ply differs: "
-                        << ply << " vs " << other.ply << '\n';
-                same = false;
-            }
-
-            for (int i = 0; i < SQUARE_NB; ++i) {
-                if (board[i] != other.board[i]) {
-                    std::cout << "board[" << i << "] differs: "
-                            << int(board[i]) << " vs " << int(other.board[i]) << '\n';
-                    same = false;
-                }
-            }
-
-            for (int i = 0; i < PIECE_NB; ++i) {
-                if (piece_bitboards[i] != other.piece_bitboards[i]) {
-                    std::cout << "piece_bitboards[" << i << "] differs: "
-                            << piece_bitboards[i] << " vs " << other.piece_bitboards[i] << '\n';
-                    same = false;
-                }
-            }
-
-            for (int i = 0; i < COLOR_NB; ++i) {
-                if (color_bitboards[i] != other.color_bitboards[i]) {
-                    std::cout << "color_bitboards[" << i << "] differs: "
-                            << color_bitboards[i] << " vs " << other.color_bitboards[i] << '\n';
-                    same = false;
-                }
-            }
-
-            if (same) {
-                std::cout << "Positions are identical.\n";
-            }
-        }
+        u64 get_key() const;
+        bool is_repetition() const;
 
         // helper functions
         private:
@@ -179,7 +124,7 @@ namespace Crystall {
         void clear_square(Square square);
         void place_piece(Square square, Piece piece);
 
-        void push_undo_info(Move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece);
+        void push_move_stacks(u64 key, Move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece);
         MoveUndoInfo& pop_undo_info();
 
     };

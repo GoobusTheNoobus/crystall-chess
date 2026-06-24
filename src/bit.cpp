@@ -1,13 +1,8 @@
 #include "bit.hpp"
 
-#include <iostream>
-#include <chrono>
-
-using namespace std::chrono;
-
 namespace Crystall {
     namespace {
-        constexpr u64 KnightAttacks[SQUARE_NB] = {
+        constexpr u64 KnightAttacks[SquareNB] = {
             0x0000000000020400ULL, 0x0000000000050800ULL, 0x00000000000A1100ULL, 0x0000000000142200ULL,
             0x0000000000284400ULL, 0x0000000000508800ULL, 0x0000000000A01000ULL, 0x0000000000402000ULL,
             0x0000000002040004ULL, 0x0000000005080008ULL, 0x000000000A110011ULL, 0x0000000014220022ULL,
@@ -26,7 +21,7 @@ namespace Crystall {
             0x0044280000000000ULL, 0x0088500000000000ULL, 0x0010A00000000000ULL, 0x0020400000000000ULL,
         };
 
-        constexpr u64 KingAttacks[SQUARE_NB] = {
+        constexpr u64 KingAttacks[SquareNB] = {
             0x0000000000000302ULL, 0x0000000000000705ULL, 0x0000000000000E0AULL, 0x0000000000001C14ULL,
             0x0000000000003828ULL, 0x0000000000007050ULL, 0x000000000000E0A0ULL, 0x000000000000C040ULL,
             0x0000000000030203ULL, 0x0000000000070507ULL, 0x00000000000E0A0EULL, 0x00000000001C141CULL,
@@ -45,7 +40,7 @@ namespace Crystall {
             0x2838000000000000ULL, 0x5070000000000000ULL, 0xA0E0000000000000ULL, 0x40C0000000000000ULL,
         };
 
-        constexpr u64 WhitePawnAttacks[SQUARE_NB] = {
+        constexpr u64 WhitePawnAttacks[SquareNB] = {
             0x0000000000000200ULL, 0x0000000000000500ULL, 0x0000000000000A00ULL, 0x0000000000001400ULL,
             0x0000000000002800ULL, 0x0000000000005000ULL, 0x000000000000A000ULL, 0x0000000000004000ULL,
             0x0000000000020000ULL, 0x0000000000050000ULL, 0x00000000000A0000ULL, 0x0000000000140000ULL,
@@ -64,7 +59,7 @@ namespace Crystall {
             0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
         };
 
-        constexpr u64 BlackPawnAttacks[SQUARE_NB] = {
+        constexpr u64 BlackPawnAttacks[SquareNB] = {
             0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
             0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
             0x0000000000000002ULL, 0x0000000000000005ULL, 0x000000000000000AULL, 0x0000000000000014ULL,
@@ -83,7 +78,7 @@ namespace Crystall {
             0x0028000000000000ULL, 0x0050000000000000ULL, 0x00A0000000000000ULL, 0x0040000000000000ULL,
         };
 
-        constexpr u64 BishopMasks[SQUARE_NB] = {
+        constexpr u64 BishopMasks[SquareNB] = {
             0x0040201008040200ULL, 0x0000402010080400ULL, 0x0000004020100A00ULL, 0x0000000040221400ULL,
             0x0000000002442800ULL, 0x0000000204085000ULL, 0x0000020408102000ULL, 0x0002040810204000ULL,
             0x0020100804020000ULL, 0x0040201008040000ULL, 0x00004020100A0000ULL, 0x0000004022140000ULL,
@@ -102,7 +97,7 @@ namespace Crystall {
             0x0028440200000000ULL, 0x0050080402000000ULL, 0x0020100804020000ULL, 0x0040201008040200ULL,
         };
 
-        constexpr u64 RookMasks[SQUARE_NB] = {
+        constexpr u64 RookMasks[SquareNB] = {
             0x000101010101017EULL, 0x000202020202027CULL, 0x000404040404047AULL, 0x0008080808080876ULL,
             0x001010101010106EULL, 0x002020202020205EULL, 0x004040404040403EULL, 0x008080808080807EULL,
             0x0001010101017E00ULL, 0x0002020202027C00ULL, 0x0004040404047A00ULL, 0x0008080808087600ULL,
@@ -121,7 +116,7 @@ namespace Crystall {
             0x6E10101010101000ULL, 0x5E20202020202000ULL, 0x3E40404040404000ULL, 0x7E80808080808000ULL,
         };
 
-        constexpr u64 BishopMagics[SQUARE_NB] = {
+        constexpr u64 BishopMagics[SquareNB] = {
             0x0002020202020200ULL, 0x0002020202020000ULL, 0x0004010202000000ULL, 0x0004040080000000ULL,
             0x0001104000000000ULL, 0x0000821040000000ULL, 0x0000410410400000ULL, 0x0000104104104000ULL,
             0x0000040404040400ULL, 0x0000020202020200ULL, 0x0000040102020000ULL, 0x0000040400800000ULL,
@@ -140,7 +135,7 @@ namespace Crystall {
             0x0000000010020200ULL, 0x0000000404080200ULL, 0x0000040404040400ULL, 0x0002020202020200ULL
         };
 
-        constexpr u64 RookMagics[SQUARE_NB] = {
+        constexpr u64 RookMagics[SquareNB] = {
             0x0080001020400080ULL, 0x0040001000200040ULL, 0x0080081000200080ULL, 0x0080040800100080ULL,
             0x0080020400080080ULL, 0x0080010200040080ULL, 0x0080008001000200ULL, 0x0080002040800100ULL,
             0x0000800020400080ULL, 0x0000400020005000ULL, 0x0000801000200080ULL, 0x0000800800100080ULL,
@@ -159,7 +154,7 @@ namespace Crystall {
             0x0001000204080011ULL, 0x0001000204000801ULL, 0x0001000082000401ULL, 0x0001FFFAABFAD1A2ULL
         };
 
-        constexpr int BishopRelevancies[SQUARE_NB] = {
+        constexpr int BishopRelevancies[SquareNB] = {
             6, 5, 5, 5, 5, 5, 5, 6,
             5, 5, 5, 5, 5, 5, 5, 5,
             5, 5, 7, 7, 7, 7, 5, 5,
@@ -170,7 +165,7 @@ namespace Crystall {
             6, 5, 5, 5, 5, 5, 5, 6,
         };
 
-        constexpr int RookRelevancies[SQUARE_NB] = {
+        constexpr int RookRelevancies[SquareNB] = {
             12, 11, 11, 11, 11, 11, 11, 12,
             11, 10, 10, 10, 10, 10, 10, 11,
             11, 10, 10, 10, 10, 10, 10, 11,
@@ -181,7 +176,7 @@ namespace Crystall {
             12, 11, 11, 11, 11, 11, 11, 12,
         };
 
-        constexpr int BishopOffsets[SQUARE_NB] = {
+        constexpr int BishopOffsets[SquareNB] = {
                0,   64,   96,  128,  160,  192,  224,  256,
              320,  352,  384,  416,  448,  480,  512,  544,
              576,  608,  640,  768,  896, 1024, 1152, 1184,
@@ -192,7 +187,7 @@ namespace Crystall {
             4928, 4992, 5024, 5056, 5088, 5120, 5152, 5184,
         };
 
-        constexpr int RookOffsets[SQUARE_NB] = {
+        constexpr int RookOffsets[SquareNB] = {
                 0,  4096,  6144,  8192, 10240, 12288, 14336, 16384,
             20480, 22528, 23552, 24576, 25600, 26624, 27648, 28672,
             30720, 32768, 33792, 34816, 35840, 36864, 37888, 38912,
@@ -294,10 +289,8 @@ namespace Crystall {
     namespace Bitboards {
 
         void init() {
-            std::cout << "Initializing bitboards...\n";
 
-            auto start = steady_clock::now();
-            for (Square square = A1; square < SQUARE_NB; square = Square(square + 1)) {
+            for (Square square = A1; square < SquareNB; square = Square(square + 1)) {
                 // init bishop
                 for (int i = 0; i < (1 << BishopRelevancies[square]); ++i) {
                     u64 blockers = generate_blocker_from_index(i, BishopMasks[square]);
@@ -316,14 +309,11 @@ namespace Crystall {
                     RookAttacks[index] = attacks;
                 }
             }
-            auto end = steady_clock::now();
-
-            std::cout << "Bitboards initialized in " << (duration_cast<nanoseconds>(end - start).count() / 1'000'000.0) << " ms" << std::endl;
         }
 
         u64 knight_attacks(Square square) { return KnightAttacks[square]; }
         u64 king_attacks(Square square) { return KingAttacks[square]; }
-        u64 pawn_attacks(Square square, Color color) { return color == WHITE ? WhitePawnAttacks[square] : BlackPawnAttacks[square]; }
+        u64 pawn_attacks(Square square, Color color) { return color == White ? WhitePawnAttacks[square] : BlackPawnAttacks[square]; }
         u64 bishop_attack(Square square, u64 occ) { return BishopAttacks[hash_bishop(square, occ) + BishopOffsets[square]]; }
         u64 rook_attack(Square square, u64 occ) { return RookAttacks[hash_rook(square, occ) + RookOffsets[square]]; }
         u64 queen_attack(Square square, u64 occ) { return rook_attack(square, occ) | bishop_attack(square, occ); }

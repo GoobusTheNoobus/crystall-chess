@@ -30,6 +30,7 @@ namespace Crystall::UCI {
                      "\nuciok" <<
                      std::endl;    
     }
+
     void handle_go(std::istringstream& iss) {
         stop();
 
@@ -69,18 +70,17 @@ namespace Crystall::UCI {
         // Movetime parameter has priority over other
         if (movetime > 0) {
             time_limit = movetime;
-            
         }
 
         else if (wtime > 0 || btime > 0) {
-            int our_time = position.get_side_to_move() == WHITE ? wtime : btime;
-            int our_inc  = position.get_side_to_move() == WHITE ? winc : binc;
+            int our_time = position.get_side_to_move() == White ? wtime : btime;
+            int our_inc  = position.get_side_to_move() == White ? winc : binc;
 
             time_limit = std::min(our_time / 20 + our_inc / 2, our_time);
         }
 
-        if (depth < 1) depth = Search::MAX_SEARCH_DEPTH;
-        if (depth > Search::MAX_SEARCH_DEPTH) depth = Search::MAX_SEARCH_DEPTH;
+        if (depth < 1) depth = Search::MaxSearchDepth;
+        if (depth > Search::MaxSearchDepth) depth = Search::MaxSearchDepth;
 
         search_thread = std::thread([depth, time_limit]() {
             try {
@@ -90,7 +90,6 @@ namespace Crystall::UCI {
             } catch (...) {
                 std::cout << "Search crashed due to unknown causes" << std::endl;
             }
-            
         });
     }
 
@@ -127,7 +126,6 @@ namespace Crystall::UCI {
     void ucinewgame() {
         
     }
-
 
     void dispatch(const std::string& cmd, std::istringstream& iss) {
         if (cmd == "uci") {
