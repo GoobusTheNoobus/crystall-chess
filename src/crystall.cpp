@@ -12,7 +12,7 @@ int main(void) {
     Evaluation::init();
     Zobrist::init();
     
-    std::cout << "Crystall UCI Chess Engine v1.0.1\n";
+    std::cout << "Crystall UCI Chess Engine v1.1.0\n";
 
     UCI::loop();
 

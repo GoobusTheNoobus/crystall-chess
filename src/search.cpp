@@ -112,12 +112,11 @@ namespace Crystall::Search {
         for (int i = 0; i < moves.size(); ++i) {
             Move move = moves[i];
 
-            // noisy / delta pruning stuff BEFORE make_move
             Move::Type flag = move.flag();
             Piece victim = pos.get_piece_on(move.dest());
 
             bool is_ep = flag == Move::EnPassant;
-            bool is_promo = flag >= Move::PromoQ; // adjust if needed
+            bool is_promo = flag >= Move::PromoQ;
             bool is_capture = victim != NoPiece || is_ep;
             bool noisy = is_capture || is_promo;
 
