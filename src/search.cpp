@@ -180,7 +180,7 @@ namespace Crystall::Search {
 
         if (depth <= 0) {
             
-            int score = pos.evaluate(); // qsearch_node(info, pos, SearchOptions::MaxQSearchDepth, alpha, beta);
+            int score = qsearch_node(info, pos, SearchOptions::MaxQSearchDepth, alpha, beta);
             info.plies_from_root--;
             return score;
         }
