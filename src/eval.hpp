@@ -14,7 +14,7 @@ namespace Crystall {
             int eg_score = 0;
 
             inline int get_score(int phase) const {
-                return (mg_score * phase + eg_score * (MaxPhase)) / MaxPhase;
+                return (mg_score * phase + eg_score * (MaxPhase - phase)) / MaxPhase;
             }
         };
 
