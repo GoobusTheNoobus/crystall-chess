@@ -33,12 +33,12 @@ namespace Crystall {
         int r = 7, f = 0;
         for (char c : fen_board_part) {
             if (c == '/') {
-                r -= 1;
+                --r;
                 f = 0;
                 continue;
             }
 
-            if (std::isdigit(c)) {
+            if (std::isdigit(static_cast<unsigned char>(c))) {
                 f += c - '0';
                 continue;
             }
@@ -46,8 +46,10 @@ namespace Crystall {
             Piece p = NoPiece;
 
             for (int i = 0; i < 13; ++i) {
-                if (PieceCharacters[i] == c) 
+                if (PieceCharacters[i] == c) {
                     p = Piece(i);
+                    break;
+                }
             }
 
             place_piece(make_square(r, f), p);
@@ -56,34 +58,48 @@ namespace Crystall {
 
         std::string fen_side_part;
         if (!(iss >> fen_side_part)) return;
-
-        side_to_move = fen_side_part == "w" ? White : Black;
+        side_to_move = (fen_side_part == "w") ? White : Black;
 
         std::string fen_castling_part;
         if (!(iss >> fen_castling_part)) return;
+        state.castling_rights = 0;
 
-        for (char c : fen_castling_part) {
-            switch (c) {
-                case 'K': state.castling_rights |= CastlingWK; break;
-                case 'Q': state.castling_rights |= CastlingWQ; break;
-                case 'k': state.castling_rights |= CastlingBK; break;
-                case 'q': state.castling_rights |= CastlingBQ; break;
+        if (fen_castling_part != "-") {
+            for (char c : fen_castling_part) {
+                switch (c) {
+                    case 'K': state.castling_rights |= CastlingWK; break;
+                    case 'Q': state.castling_rights |= CastlingWQ; break;
+                    case 'k': state.castling_rights |= CastlingBK; break;
+                    case 'q': state.castling_rights |= CastlingBQ; break;
+                }
             }
         }
 
         std::string fen_ep_part;
         if (!(iss >> fen_ep_part)) return;
 
-        state.en_passant_square = make_square(fen_ep_part);
+        if (fen_ep_part == "-")
+            state.en_passant_square = NoSquare;
+        else
+            state.en_passant_square = make_square(fen_ep_part);
 
         std::string fen_rule50_part;
         if (!(iss >> fen_rule50_part)) return;
-
         std::from_chars(
             fen_rule50_part.data(),
             fen_rule50_part.data() + fen_rule50_part.size(),
             state.rule50_clock
         );
+
+        if (side_to_move == Black)
+            hash ^= Zobrist::SideKey;
+
+        if (state.castling_rights != 0)
+            hash ^= Zobrist::CastlingKeys[state.castling_rights];
+
+        if (state.en_passant_square != NoSquare)
+            hash ^= Zobrist::EnPassantKeys[file_of(state.en_passant_square)];
+
     }
 
     std::string Position::to_string() const {
@@ -405,7 +421,6 @@ namespace Crystall {
 
     // pushes info into the stacks that are needed with making move
     void Position::push_move_stacks(u64 key, Move move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
-        // hash_stack[ply] = get_key();
         move_undo_stack[ply++] = { key, move, castling_rights, rule50_clock, en_passant_square, captured_piece };
     }
 
@@ -427,10 +442,10 @@ namespace Crystall {
             ? make_piece(Pawn, opposite(us))
             : get_piece_on(dest);
 
+        u64 hash_before = hash;
         push_move_stacks(hash, move, state.castling_rights, state.rule50_clock,
                         state.en_passant_square, captured_piece);
 
-        // remove old side / EP / castling state from hash
         hash ^= Zobrist::SideKey;
 
         if (state.en_passant_square != NoSquare)
@@ -500,7 +515,6 @@ namespace Crystall {
         if (from == E1) state.castling_rights &= ~(CastlingWK | CastlingWQ);
         else if (from == E8) state.castling_rights &= ~(CastlingBK | CastlingBQ);
 
-        // add new EP / castling state to hash
         if (state.en_passant_square != NoSquare)
             hash ^= Zobrist::EnPassantKeys[file_of(state.en_passant_square)];
 
@@ -509,9 +523,11 @@ namespace Crystall {
 
         if (captured_piece != NoPiece || moving_pt == Pawn) state.rule50_clock = 0;
         else state.rule50_clock++;
+
+        // std::cerr << "MOVE " << move.to_string() << ": hash " << std::hex << hash_before << " -> " << hash << std::dec << " (ply=" << ply << ")\n";
     }
 
-    void Position::make_move(std::string move_str) {
+    void Position::make_move(const std::string& move_str) {
         MoveList list(*this);
 
         for (int i = 0; i < list.size(); ++i) {
@@ -610,4 +626,30 @@ namespace Crystall {
         
         return hash;
     }    
+
+    bool Position::is_repetition() const {
+        u64 key = hash;
+
+        // no repetition possible if there isn't enough history
+        if (ply < 2) return false;
+
+        int count = 0;
+
+        for (int i = ply - 2; i >= std::max(0, ply - state.rule50_clock); i -= 2) {
+            if (move_undo_stack[i].key == key) {
+                ++count;
+                // std::cerr << "DEBUG: Found matching hash at ply " << i << ", count now " << count << " (current ply=" << ply << ", hash=" << std::hex << key << std::dec << ")\n";
+            }
+            if (count >= 2) {
+                /*std::cerr << "DEBUG: THREEFOLD DETECTED at ply " << ply << " (rule50_clock=" << state.rule50_clock << ")\n";
+                for (int j = ply - 2; j >= std::max(0, ply - state.rule50_clock); j -= 2) {
+                    std::cout << "DEBUG: ply " << j << ": hash=" << std::hex << move_undo_stack[j].key << std::dec << ", move=" << move_undo_stack[j].move.to_string() << "\n";
+                }
+                std::abort();*/
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

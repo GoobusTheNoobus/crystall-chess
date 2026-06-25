@@ -91,6 +91,9 @@ namespace Crystall::Search {
     int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
         info.nodes_searched++;
 
+        if (pos.is_repetition())
+            return DrawScore;
+
         bool in_check = pos.is_in_check();
         int static_eval = pos.evaluate();
 
@@ -170,16 +173,16 @@ namespace Crystall::Search {
         info.plies_from_root++;
         info.seldepth = std::max(info.seldepth, info.plies_from_root);
 
-        // if (pos.is_repetition()) return DrawScore;
+        if (pos.is_repetition() || pos.is_rule_50()) {
+            info.plies_from_root--;
+            return DrawScore;
+        }
 
         if (depth <= 0) {
-            /*
-            int score = qsearch_node(info, pos, SearchOptions::MaxQSearchDepth, alpha, beta);
+            
+            int score = pos.evaluate(); // qsearch_node(info, pos, SearchOptions::MaxQSearchDepth, alpha, beta);
             info.plies_from_root--;
-            return score;*/
-
-            info.plies_from_root--;
-            return pos.evaluate();
+            return score;
         }
 
         MoveList moves(pos);
@@ -231,6 +234,7 @@ namespace Crystall::Search {
 
             if (info.plies_from_root != 0) {
                 std::cerr << "Plies from root is non zero at root\n";
+                std::cerr << "Plies from root: " << info.plies_from_root << std::endl;
                 std::exit(-1);
             }
 

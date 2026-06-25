@@ -108,7 +108,7 @@ namespace Crystall {
         // bigger boy functions
         int generate_pseudo_legal_moves(Move[]) const;
         void make_move(Move);
-        void make_move(std::string);
+        void make_move(const std::string&);
         bool attempt_move(Move);
         void undo_move();
 
