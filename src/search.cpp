@@ -15,6 +15,7 @@ namespace Crystall::Search {
     struct SearchOptions {
         constexpr static int DeltaPruningMargin = 140;
         constexpr static int MaxQSearchDepth = 15;
+        constexpr static int AspirationWindow = 100;
     };
 
     struct SearchTimer {
@@ -55,9 +56,107 @@ namespace Crystall::Search {
         if (flag >= Move::PromoQ || flag == Move::EnPassant) return true;
 
         return pos.get_piece_on(move.dest()) != NoPiece;
-    }    
+    }  
+    
+    bool is_terminal(Position& pos) {
+        MoveList moves(pos);
 
-    // main functions
+        for (int i = 0; i < moves.size(); ++i) {
+            Move move = moves[i];
+
+            bool is_legal = pos.attempt_move(move);
+            if (is_legal) {
+                pos.undo_move();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /*// main functions
+    void start_search(Position& pos, int max_depth, int movetime) {
+
+        // do not start search if there are no legal moves
+        if (is_terminal(pos)) {
+            std::cout << "bestmove none" << std::endl;
+            return;
+        }
+
+        UCI::info_string("score cp " + std::to_string(pos.evaluate()));
+
+        SearchTimer::start(movetime);
+
+        SearchInfo info;
+
+        int score = 0;
+        Move best_move;
+
+        // iterative deepening
+
+        for (int depth = 1; depth <= max_depth; ++depth) {
+            if (SearchTimer::timeout_search()) break;
+
+            info.previous_nodes_searched = info.nodes_searched;
+            info.seldepth = 0;
+
+            RootSearchResult result;
+
+            int delta = SearchOptions::AspirationWindow;
+
+            int alpha = score - delta;
+            int beta = score + delta;
+
+
+            if (depth == 1) {
+                result = search_root(info, pos, depth, -Infinity, Infinity);
+            } else {
+
+                while (true) {
+                    result = search_root(info, pos, depth, alpha, beta);
+
+                    if (SearchTimer::timeout_search()) break;
+
+                    // fail low
+                    if (result.score <= alpha) {
+                        alpha -= delta;
+                        
+                        delta *= 2;
+                        continue;
+                    } 
+                    
+                    // fail high
+                    else if (result.score >= beta) {
+                        beta += delta;
+
+                        delta *= 2;
+                        continue;
+                    } 
+                    
+                    break;
+                }
+            }
+
+            if (SearchTimer::timeout_search()) break;
+
+            score = result.score;
+            best_move = result.move;
+
+            UCI::info_depth(
+                depth, 
+                info.seldepth, 
+                result.score, 
+                info.nodes_searched - info.previous_nodes_searched, 
+                SearchTimer::elapsed_ms(), 
+                info.nodes_searched, 
+                result.move
+            );
+        }
+
+        std::cout << "bestmove " << best_move.to_string() << std::endl;
+    }*/
+
     void start_search(Position& pos, int max_depth, int movetime) {
         int score = 0;
 
@@ -73,7 +172,7 @@ namespace Crystall::Search {
             info.previous_nodes_searched = info.nodes_searched;
             info.seldepth = 0;
 
-            RootSearchResult result = search_root(info, pos, depth);
+            RootSearchResult result = search_root(info, pos, depth, -Infinity, Infinity);
 
             if (SearchTimer::timeout_search()) break;
 
@@ -89,7 +188,7 @@ namespace Crystall::Search {
         SearchTimer::stop_flag = true;
     }
 
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth) {
+    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
         MoveList moves(pos);
         int best_score = -Infinity;
         Move best_move;
@@ -101,7 +200,7 @@ namespace Crystall::Search {
             bool is_legal = pos.attempt_move(move);
             if (!is_legal) continue;
 
-            int score = -search_node(info, pos, depth - 1, -Infinity, Infinity);
+            int score = -search_node(info, pos, depth - 1, -beta, -alpha);
 
             pos.undo_move();
 

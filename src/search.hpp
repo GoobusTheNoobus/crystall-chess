@@ -23,7 +23,7 @@ namespace Crystall::Search {
 
     int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
     int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth);
+    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
 
     void perft_divide(Position& pos, int depth);
     int perft(Position& pos, int depth_left);
