@@ -107,8 +107,9 @@ namespace Crystall::Search {
             return static_eval;
 
         info.plies_from_root++;
-        info.seldepth = std::max(info.seldepth, info.plies_from_root);
 
+        info.seldepth = std::max(info.seldepth, info.plies_from_root);
+        
         MoveList moves(pos);
         bool has_legal_move = false;
 
@@ -123,7 +124,7 @@ namespace Crystall::Search {
             bool is_capture = victim != NoPiece || is_ep;
             bool noisy = is_capture || is_promo;
 
-            if (!in_check && !noisy)
+            if (!noisy)
                 continue;
 
             if (!in_check && !is_promo) {

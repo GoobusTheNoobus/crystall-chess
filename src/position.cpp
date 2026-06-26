@@ -618,7 +618,7 @@ namespace Crystall {
         int score;
         score = psqt_scores.get_score(phase);
 
-        return side_to_move == White ? score : -score;
+        return (side_to_move == White ? score : -score) + Evaluation::TempoBonus;
     }
 
 
