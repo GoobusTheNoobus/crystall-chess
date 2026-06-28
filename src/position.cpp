@@ -428,7 +428,7 @@ namespace Crystall {
         return move_undo_stack[--ply];
     }
 
-    void Position::make_move(Move move) {
+    void Position::make_move(const Move& move) {
         Color us = side_to_move;
         bool is_white = us == White;
 
@@ -538,7 +538,7 @@ namespace Crystall {
         }
     }
 
-    bool Position::attempt_move(Move move) {
+    bool Position::attempt_move(const Move& move) {
         Color us = side_to_move;
 
         make_move(move);
@@ -618,14 +618,8 @@ namespace Crystall {
         int score;
         score = psqt_scores.get_score(phase);
 
-        return (side_to_move == White ? score : -score) + Evaluation::TempoBonus;
-    }
-
-
-    u64 Position::get_key() const {
-        
-        return hash;
-    }    
+        return std::min(std::max((side_to_move == White ? score : -score) + Evaluation::TempoBonus, MinCentipawn), MaxCentipawn);
+    } 
 
     bool Position::is_repetition() const {
         u64 key = hash;

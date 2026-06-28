@@ -99,6 +99,7 @@ namespace Crystall {
         inline Square get_en_passant() const { return state.en_passant_square; }
         inline bool has_castling_right(int mask) const { return state.castling_rights & mask; }
         inline bool is_rule_50() const { return state.rule50_clock >= 100; }
+        inline u64 get_key() const { return hash; }
 
         // big boy functions 
         bool is_attacked(Square, Color by) const;
@@ -107,14 +108,12 @@ namespace Crystall {
 
         // bigger boy functions
         int generate_pseudo_legal_moves(Move[]) const;
-        void make_move(Move);
+        void make_move(const Move&);
         void make_move(const std::string&);
-        bool attempt_move(Move);
+        bool attempt_move(const Move&);
         void undo_move();
 
         int evaluate() const;
-
-        u64 get_key() const;
         bool is_repetition() const;
 
         // helper functions

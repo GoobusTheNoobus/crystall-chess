@@ -25,9 +25,9 @@ namespace Crystall {
 
         public:
         // lookups
-        inline Square from() { return from_; }
-        inline Square dest() { return dest_; }
-        inline Type flag() { return flag_; }
+        inline Square from() const { return from_; }
+        inline Square dest() const { return dest_; }
+        inline Type flag() const { return flag_; }
 
         inline Move(Square from, Square dest, Type flag) : from_(from), dest_(dest), flag_(flag) {}
         inline Move() : from_(NoSquare), dest_(NoSquare), flag_(None) {}

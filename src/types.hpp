@@ -63,7 +63,13 @@ namespace Crystall {
     }
 
     constexpr int CastlingWK = 1, CastlingWQ = 2, CastlingBK = 4, CastlingBQ = 8;
-    constexpr int DrawScore = 0, MaxCentipawn = 10000, MateScore = 11000, Infinity = 11001, Timeout = 11002;
+    constexpr int DrawScore = 0, 
+                  MaxCentipawn = 10000, 
+                  MinCentipawn = -10000, 
+                  MateScore = 11000, 
+                  Infinity = 11001, 
+                  NegativeInfinity = -11001,
+                  Timeout = 11002;
 
     inline std::string score_string(int score) {
         if (std::abs(score) <= MaxCentipawn) return "cp " + std::to_string(score);

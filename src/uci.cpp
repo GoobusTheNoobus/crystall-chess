@@ -7,8 +7,6 @@
 
 namespace Crystall::UCI {
 
-
-
     namespace {
 
     // Current position object, controlled via the position UCI command
@@ -17,9 +15,10 @@ namespace Crystall::UCI {
     // We run the search on a different thread so main thread can stay on UCI loop
     std::thread search_thread;
 
-    void stop() {
-        Search::stop_search();
-        if (search_thread.joinable()) {
+    void stop(bool wait_for_completion = false) {
+        Search::stop();
+
+        if (wait_for_completion && search_thread.joinable()) {
             search_thread.join();
         }
     }
@@ -27,16 +26,20 @@ namespace Crystall::UCI {
     void handle_uci() {
         std::cout << "id name Crystall \n" <<
                      "id author GoobusTheNoobus\n" <<
-                     "\nuciok" <<
+                     "uciok" <<
                      std::endl;    
     }
 
     void handle_go(std::istringstream& iss) {
         stop();
 
+        if (search_thread.joinable()) {
+            search_thread.join();
+        }
+
         std::string token;
 
-        int depth = 32;
+        int depth = 0;
         int movetime = 0;
 
         int winc = 0;
@@ -57,11 +60,6 @@ namespace Crystall::UCI {
                 iss >> winc;
             } else if (token == "binc") {
                 iss >> binc;
-            } else if (token == "perft") {
-                iss >> depth;
-                Search::perft_divide(position, depth);
-
-                return;
             }
         }
 
@@ -79,12 +77,11 @@ namespace Crystall::UCI {
             time_limit = std::min(our_time / 20 + our_inc / 2, our_time);
         }
 
-        if (depth < 1) depth = Search::MaxSearchDepth;
-        if (depth > Search::MaxSearchDepth) depth = Search::MaxSearchDepth;
-
+        if (depth < 1 || depth > Search::MaxSearchDepth) depth = Search::MaxSearchDepth;
+        
         search_thread = std::thread([depth, time_limit]() {
             try {
-                Search::start_search(position, depth, time_limit);
+                Search::start(position, depth, time_limit);
             } catch (const std::exception& e) {
                 std::cout << "Search crashed: " << e.what() << std::endl;
             } catch (...) {
@@ -111,13 +108,14 @@ namespace Crystall::UCI {
             }
 
             position.parse_fen(fen);
-            iss >> token;
         }
 
         if (token == "moves") {
             while (iss >> token) {
                 position.make_move(token);
             }
+        } else {
+            std::cout << token << std::endl;
         }
     }
     void handle_isready() {
@@ -167,7 +165,7 @@ namespace Crystall::UCI {
 
             iss >> token;
             if (token == "quit") {
-                stop();
+                stop(true);
                 break;
             } else if (token == "stop") {
                 stop();

@@ -4,7 +4,7 @@
 #include "position.hpp"
 
 namespace Crystall::Search {
-    constexpr int MaxSearchDepth = 100;
+    constexpr int MaxSearchDepth = 32;
 
     struct SearchInfo {
         u64 nodes_searched = 0;
@@ -14,17 +14,11 @@ namespace Crystall::Search {
     };
 
     struct RootSearchResult {
-        int score = 0;
         Move move;
+        int score = 0;
     };
 
-    void start_search(Position& pos, int depth, int movetime);
-    void stop_search();
-
-    int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-    int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-
-    void perft_divide(Position& pos, int depth);
-    int perft(Position& pos, int depth_left);
+    // we copy the position during search
+    void start(Position pos, int depth, int movetime);
+    void stop();
 }
