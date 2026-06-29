@@ -3,6 +3,7 @@
 #include "types.hpp"
 
 namespace Crystall {
+    struct Move;
     struct Move {
         enum Type {
             Normal,
@@ -32,6 +33,10 @@ namespace Crystall {
         inline Move(Square from, Square dest, Type flag) : from_(from), dest_(dest), flag_(flag) {}
         inline Move() : from_(NoSquare), dest_(NoSquare), flag_(None) {}
 
+        inline bool operator==(const Move& other) const {
+            return from_ == other.from_ && dest_ == other.dest_ && flag_ == other.flag_;
+        }
+
         constexpr static char PromoCharacters[4] = {'q', 'r', 'b', 'n'};
 
         inline std::string to_string() const {
@@ -44,5 +49,7 @@ namespace Crystall {
 
             return from_str + dest_str;
         }
+
+        static const Move NullMove;
     };
 }

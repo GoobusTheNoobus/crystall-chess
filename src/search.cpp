@@ -1,6 +1,7 @@
 #include "search.hpp"
 #include "uci.hpp"
 #include "movelist.hpp"
+
 #include <chrono>
 #include <atomic>
 
@@ -48,9 +49,6 @@ namespace Crystall::Search {
 
     void start(Position pos, int max_depth, int movetime) {
 
-        UCI::info_string("starting search with depth " + std::to_string(max_depth));
-        UCI::info_string("starting search with movetime " + std::to_string(movetime) + "ms");
-
         Timer::start(movetime);
 
         Move best_move;
@@ -94,11 +92,9 @@ namespace Crystall::Search {
 
                     // inside window
                     break;
-
                 }
             }
             
-
             if (Timer::should_stop_search()) break;
 
             best_move = result.move;
@@ -129,8 +125,12 @@ namespace Crystall::Search {
             Move best_move;
 
             MoveList moves(pos);
-            for (int i = 0; i < moves.size(); ++i) {
+            moves.calculate_scores();
+
+            int i = 0;
+            while (moves.next(i)) {
                 Move move = moves[i];
+                ++i;
 
                 bool is_legal = pos.attempt_move(move);
                 if (!is_legal) continue;
@@ -168,8 +168,12 @@ namespace Crystall::Search {
             int legal_moves = 0;
 
             MoveList moves(pos);
-            for (int i = 0; i < moves.size(); ++i) {
+            moves.calculate_scores();
+
+            int i = 0;
+            while (moves.next(i)) {
                 Move move = moves[i];
+                ++i;
 
                 bool is_legal = pos.attempt_move(move);
                 if (!is_legal) continue;

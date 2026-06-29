@@ -14,6 +14,8 @@ As of version 1.0.0, here are the features:
 - Alpha Beta Search ([`search.cpp`](src/search.cpp))
     - Quiescence Search 
     - Iterative Deepening
+    - Aspiration Window
+    - Move Ordering
 - Evaluation
     - PeSTO 
 
