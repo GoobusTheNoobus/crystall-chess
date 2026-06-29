@@ -114,8 +114,6 @@ namespace Crystall::UCI {
             while (iss >> token) {
                 position.make_move(token);
             }
-        } else {
-            std::cout << token << std::endl;
         }
     }
     void handle_isready() {

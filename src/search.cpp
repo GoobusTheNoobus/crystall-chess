@@ -8,6 +8,9 @@ namespace Crystall::Search {
 
     namespace {
 
+        constexpr int AspirationWindow = 130;
+        constexpr int MaxQSearchDepth = 15;
+
         // declare functions
         int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
@@ -51,6 +54,7 @@ namespace Crystall::Search {
         Timer::start(movetime);
 
         Move best_move;
+        int score = 0;
 
         SearchInfo info;
         for (int depth = 1; depth <= max_depth; ++depth) {
@@ -58,12 +62,47 @@ namespace Crystall::Search {
             info.seldepth = 0;
             info.previous_nodes_searched = info.nodes_searched;
 
+            int delta = AspirationWindow;
+
+            int alpha = score - delta;
+            int beta = score + delta;
+
             RootSearchResult result;
-            result = search_root(info, pos, depth, -Infinity, Infinity);
+
+            if (depth == 1) {
+                result = search_root(info, pos, depth, alpha, beta);
+            }
+            else {
+                while (true) {
+                    result = search_root(info, pos, depth, alpha, beta);
+
+                    if (Timer::should_stop_search()) break;
+
+                    // fail low
+                    if (result.score <= alpha) {
+                        alpha -= delta;
+                        delta *= 2;
+                        continue;
+                    }
+
+                    // fail high
+                    if (result.score >= beta) {
+                        beta += delta;
+                        delta *= 2;
+                        continue;
+                    }
+
+                    // inside window
+                    break;
+
+                }
+            }
+            
 
             if (Timer::should_stop_search()) break;
 
             best_move = result.move;
+            score = result.score;
 
             UCI::info_depth(
                 depth, 
@@ -117,7 +156,7 @@ namespace Crystall::Search {
             if (pos.is_repetition() || pos.is_rule_50()) return DrawScore;
             if (depth == 0) {
                 int qsearch_depth = info.plies_from_root * 2 + 2;
-                return qsearch_node(info, pos, std::min(qsearch_depth, 15), alpha, beta);
+                return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), alpha, beta);
             }
 
             ++info.plies_from_root;
