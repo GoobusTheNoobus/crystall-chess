@@ -15,10 +15,10 @@ namespace Crystall::UCI {
     // We run the search on a different thread so main thread can stay on UCI loop
     std::thread search_thread;
 
-    void stop(bool wait_for_completion = false) {
+    void stop() {
         Search::stop();
 
-        if (wait_for_completion && search_thread.joinable()) {
+        if (search_thread.joinable()) {
             search_thread.join();
         }
     }
@@ -163,7 +163,7 @@ namespace Crystall::UCI {
 
             iss >> token;
             if (token == "quit") {
-                stop(true);
+                stop();
                 break;
             } else if (token == "stop") {
                 stop();
@@ -172,5 +172,7 @@ namespace Crystall::UCI {
 
             dispatch(token, iss);
         }
+
+        stop();
     }
 }
