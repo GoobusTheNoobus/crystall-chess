@@ -27,5 +27,11 @@ namespace Crystall {
         return filled;
     }
 
+    void TranspositionTable::clear() {
+        for (int i = 0; i < EntriesNB; ++i) {
+            data[i] = Entry::NullEntry;
+        }
+    }
+
     const TranspositionTable::Entry TranspositionTable::Entry::NullEntry = {};
 }

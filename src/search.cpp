@@ -54,6 +54,7 @@ namespace Crystall::Search {
     void start(Position pos, int max_depth, int movetime) {
 
         Timer::start(movetime);
+        TranspositionTable::clear();
 
         Move best_move;
         int score = 0;
@@ -228,17 +229,7 @@ namespace Crystall::Search {
 
                 ++legal_moves;
 
-                int score; 
-                if (legal_moves == 1)
-                    score = -search_node(info, pos, depth - 1, -beta, -alpha);
-                else {
-                    score = -search_node(info, pos, depth - 1, -alpha - 1, -alpha);
-
-                    // research
-                    if (score > alpha) {
-                        score = -search_node(info, pos, depth - 1, -beta, -alpha);
-                    }
-                }
+                int score = -search_node(info, pos, depth - 1, -beta, -alpha, allow_nmp);
                 
                 pos.undo_move();
 

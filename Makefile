@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++20 -O3 -march=native -mbmi2 -DNDEBUG
 SRCS = $(wildcard src/*.cpp)
 OBJS = $(SRCS:.cpp=.o)
 
-TARGET = crystall_new.exe
+TARGET = crystall.exe
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

@@ -35,6 +35,7 @@ namespace Crystall {
 
         void write(u64 key, Move& best_move, int score, uint8_t depth, EntryType flag);
         const Entry& read(u64 key);
+        void clear();
 
         int hashfull();
         

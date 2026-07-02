@@ -120,7 +120,7 @@ namespace Crystall::UCI {
         std::cout << "readyok" << std::endl;
     }
     void ucinewgame() {
-        
+        TranspositionTable::clear();
     }
 
     void dispatch(const std::string& cmd, std::istringstream& iss) {
