@@ -436,11 +436,17 @@ namespace Crystall {
         Square dest = move.dest();
         Move::Type flag = move.flag();
 
-        Piece moving_piece = get_piece_on(from);
-        PieceType moving_pt = type_of(moving_piece);
-        Piece captured_piece = flag == Move::EnPassant
-            ? make_piece(Pawn, opposite(us))
-            : get_piece_on(dest);
+        Piece moving_piece = NoPiece;
+        PieceType moving_pt = Pawn;
+        Piece captured_piece = NoPiece;
+
+        if (!(move == Move::NullMove)) {
+            moving_piece = get_piece_on(from);
+            moving_pt = type_of(moving_piece);
+            captured_piece = flag == Move::EnPassant
+                ? make_piece(Pawn, opposite(us))
+                : get_piece_on(dest);
+        }
 
         u64 hash_before = hash;
         push_move_stacks(hash, move, state.castling_rights, state.rule50_clock,
@@ -456,6 +462,10 @@ namespace Crystall {
 
         side_to_move = opposite(side_to_move);
         state.en_passant_square = NoSquare;
+
+        if (move == Move::NullMove) {
+            return;
+        }
 
         switch (flag) {
             case Move::Normal: {
@@ -569,6 +579,11 @@ namespace Crystall {
         Square from = move.from();
         Square dest = move.dest();
         Move::Type flag = move.flag();
+
+        if (move == Move::NullMove) {
+            hash = info.key;
+            return;
+        }
 
         Piece moving_piece = flag >= Move::PromoQ ? make_piece(Pawn, us) : get_piece_on(dest);
 

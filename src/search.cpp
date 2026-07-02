@@ -1,9 +1,11 @@
 #include "search.hpp"
 #include "uci.hpp"
 #include "movelist.hpp"
+#include "tt.hpp"
 
 #include <chrono>
 #include <atomic>
+#include <algorithm>
 
 namespace Crystall::Search {
 
@@ -11,9 +13,11 @@ namespace Crystall::Search {
 
         constexpr int AspirationWindow = 130;
         constexpr int MaxQSearchDepth = 15;
+        constexpr int MinNMPDepth = 3;
+        constexpr int NMPReduction = 2;
 
         // declare functions
-        int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
+        int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
         RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
 
@@ -100,6 +104,24 @@ namespace Crystall::Search {
             best_move = result.move;
             score = result.score;
 
+            Position copy = pos;
+            std::vector<Move> pv;
+
+            if (best_move.is_valid() && copy.attempt_move(best_move)) {
+                pv.push_back(best_move);
+            }
+            
+            for (int i = 0; i < depth; ++i) {
+                auto entry = TranspositionTable::read(copy.get_key());
+                if (entry.depth > 0 && entry.best_move.is_valid()) {
+                    Move move = entry.best_move;
+
+                    if (!copy.attempt_move(move)) break;
+
+                    pv.push_back(move);
+                }
+            }
+
             UCI::info_depth(
                 depth, 
                 info.seldepth, 
@@ -107,7 +129,7 @@ namespace Crystall::Search {
                 info.nodes_searched - info.previous_nodes_searched, 
                 Timer::elapsed(), 
                 info.nodes_searched, 
-                best_move
+                pv
             );
         }
 
@@ -150,7 +172,7 @@ namespace Crystall::Search {
             return {best_move, best_score};
         }
 
-        int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
+        int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp) {
             ++info.nodes_searched;
 
             if (pos.is_repetition() || pos.is_rule_50()) return DrawScore;
@@ -164,11 +186,37 @@ namespace Crystall::Search {
 
             if (Timer::should_stop_search()) return Timeout;
 
+            // tt probe
+
+            auto entry = TranspositionTable::read(pos.get_key());
+            Move tt_move;
+            if (entry.depth != 0 && entry.depth >= depth && entry.key == pos.get_key()) {
+                if (entry.flag == TranspositionTable::Exact) {
+                    --info.plies_from_root;
+                    return entry.score;
+                }
+                    
+                else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
+                else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
+
+                if (alpha >= beta) {
+                    --info.plies_from_root;
+                    return entry.score;
+                }
+
+                tt_move = entry.best_move;
+            }
+
+            bool in_check = pos.is_in_check();
+            int static_eval = pos.evaluate();
+
             int best_score = NegativeInfinity;
+            Move best_move;
             int legal_moves = 0;
+            int original_alpha = alpha;
 
             MoveList moves(pos);
-            moves.calculate_scores();
+            moves.calculate_scores(tt_move);
 
             int i = 0;
             while (moves.next(i)) {
@@ -180,24 +228,48 @@ namespace Crystall::Search {
 
                 ++legal_moves;
 
-                int score = -search_node(info, pos, depth - 1, -beta, -alpha);
+                int score; 
+                if (legal_moves == 1)
+                    score = -search_node(info, pos, depth - 1, -beta, -alpha);
+                else {
+                    score = -search_node(info, pos, depth - 1, -alpha - 1, -alpha);
+
+                    // research
+                    if (score > alpha) {
+                        score = -search_node(info, pos, depth - 1, -beta, -alpha);
+                    }
+                }
+                
                 pos.undo_move();
 
                 alpha = std::max(score, alpha);
-                best_score = std::max(score, best_score);
+                
+                if (score > best_score) {
+                    best_score = score;
+                    best_move = move;
+                }
 
                 // alpha beta pruning
                 if (alpha >= beta) break;
             }
 
-            --info.plies_from_root;
-
             if (legal_moves == 0) {
+                --info.plies_from_root;
                 if (pos.is_in_check()) 
                     return -MateScore + info.plies_from_root + 1;
                 return DrawScore;
             }
 
+            TranspositionTable::EntryType store_flag;
+            if (best_score <= original_alpha) store_flag = TranspositionTable::Upper;
+            else if (best_score >= beta) store_flag = TranspositionTable::Lower;
+            else store_flag = TranspositionTable::Exact;
+
+            if (best_move.is_valid()) {
+                TranspositionTable::write(pos.get_key(), best_move, std::clamp(best_score, -KnownWin, KnownWin), depth, store_flag);
+            }
+
+            --info.plies_from_root;
             return best_score;
         }
 

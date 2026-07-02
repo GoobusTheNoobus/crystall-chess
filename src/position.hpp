@@ -63,7 +63,6 @@ namespace Crystall {
     class Position {
 
         // members
-        private:
 
         // board representation
         Piece board[SquareNB];
@@ -95,6 +94,7 @@ namespace Crystall {
         inline u64 get_bitboard(Color c) const { return color_bitboards[int(c)]; }
         inline u64 get_bitboard(Piece p) const { return piece_bitboards[int(p)]; }
         inline u64 get_bitboard(PieceType pt, Color c) const { return piece_bitboards[int(make_piece(pt, c))]; }
+        inline const u64* get_bitboards() const { return piece_bitboards; }
 
         inline Color get_side_to_move() const { return side_to_move; }
         inline Square get_en_passant() const { return state.en_passant_square; }
