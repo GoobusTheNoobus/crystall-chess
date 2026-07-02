@@ -35,7 +35,7 @@ namespace Crystall {
             }
 
             std::swap(moves[i], moves[highest_score_index]);
-            std::swap(moves[i], moves[highest_score_index]);
+            std::swap(scores[i], scores[highest_score_index]);
 
             return true;
         }
