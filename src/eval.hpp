@@ -9,7 +9,7 @@ namespace Crystall {
         constexpr int TempoBonus = 20;
 
         constexpr int MaxPhase = 24;
-        constexpr static int PhaseInc[PieceNB] = {0, 0, 1, 1, 1, 1, 2, 2, 4, 4, 0, 0}; 
+        constexpr static int PhaseInc[PieceNB] = {0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}; 
 
         struct TaperedScore {
             int mg_score = 0;
