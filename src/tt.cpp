@@ -1,5 +1,7 @@
 #include "tt.hpp"
 
+#include <cstring>
+
 namespace Crystall {
 
     const TranspositionTable::Entry& TranspositionTable::read(u64 key) {
@@ -28,9 +30,7 @@ namespace Crystall {
     }
 
     void TranspositionTable::clear() {
-        for (int i = 0; i < EntriesNB; ++i) {
-            data[i] = Entry::NullEntry;
-        }
+        std::memset(data, 0, sizeof(data));
     }
 
     const TranspositionTable::Entry TranspositionTable::Entry::NullEntry = {};

@@ -5,6 +5,7 @@
 
 namespace Crystall::Search {
     constexpr int MaxSearchDepth = 32;
+    inline int history_table[ColorNB][SquareNB][SquareNB];
 
     struct SearchInfo {
         u64 nodes_searched = 0;
@@ -21,4 +22,5 @@ namespace Crystall::Search {
     // we copy the position during search
     void start(Position pos, int depth, int movetime);
     void stop();
+    void clear_history_table();
 }

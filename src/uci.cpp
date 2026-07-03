@@ -121,6 +121,7 @@ namespace Crystall::UCI {
     }
     void ucinewgame() {
         TranspositionTable::clear();
+        Search::clear_history_table();
     }
 
     void dispatch(const std::string& cmd, std::istringstream& iss) {

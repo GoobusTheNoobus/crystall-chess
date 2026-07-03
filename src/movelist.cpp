@@ -1,4 +1,5 @@
 #include "movelist.hpp"
+#include "search.hpp"
 
 namespace Crystall {
 
@@ -39,7 +40,8 @@ namespace Crystall {
                 return promo_score;
             }
 
-            return 0;
+            int history_score = Search::history_table[pos.get_side_to_move()][from][dest];
+            return history_score;
         }
     }
 

@@ -6,8 +6,13 @@
 #include <chrono>
 #include <atomic>
 #include <algorithm>
+#include <cstring>
 
 namespace Crystall::Search {
+
+    void clear_history_table() {
+        std::memset(history_table, 0, sizeof(history_table));
+    }
 
     namespace {
 
@@ -49,12 +54,25 @@ namespace Crystall::Search {
                 return stop_flag.load() || (max_time_ms > 0 && elapsed() > max_time_ms);
             }
         };
+
+        bool is_noisy(const Position& pos, const Move& move) {
+            return move.flag() >= Move::EnPassant || pos.get_piece_on(move.dest()) != NoPiece;
+        }
+
+        void normalize_history_table() {
+            for (int c = 0; c < ColorNB; ++c) {
+                for (int from = 0; from < SquareNB; ++from) {
+                    for (int dest = 0; dest < SquareNB; ++dest) {
+                        history_table[c][from][dest] /= 2;
+                    }
+                }
+            }
+        }
     }
 
     void start(Position pos, int max_depth, int movetime) {
 
         Timer::start(movetime);
-        TranspositionTable::clear();
 
         Move best_move;
         int score = 0;
@@ -134,7 +152,9 @@ namespace Crystall::Search {
             );
         }
 
+        TranspositionTable::clear();
         std::cout << "bestmove " << best_move.to_string() << std::endl;
+
     }
 
     void stop() {
@@ -180,6 +200,10 @@ namespace Crystall::Search {
             if (depth == 0) {
                 int qsearch_depth = info.plies_from_root * 2 + 2;
                 return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), alpha, beta);
+            }
+
+            if (info.nodes_searched % 100000 == 0) {
+                normalize_history_table();
             }
 
             ++info.plies_from_root;
@@ -241,7 +265,12 @@ namespace Crystall::Search {
                 }
 
                 // alpha beta pruning
-                if (alpha >= beta) break;
+                if (alpha >= beta) {
+                    if (!is_noisy(pos, move)) {
+                        history_table[pos.get_side_to_move()][move.from()][move.dest()] += depth * depth;
+                    }
+                    break;
+                }
             }
 
             if (legal_moves == 0) {
@@ -262,10 +291,6 @@ namespace Crystall::Search {
 
             --info.plies_from_root;
             return best_score;
-        }
-
-        bool is_noisy(const Position& pos, const Move& move) {
-            return move.flag() >= Move::EnPassant || pos.get_piece_on(move.dest()) != NoPiece;
         }
 
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
