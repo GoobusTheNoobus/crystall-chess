@@ -22,9 +22,10 @@ namespace Crystall::Search {
         constexpr int NMPReduction = 2;
 
         // declare functions
+        template <bool is_pv>
         int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
+        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& move);
 
         using Time = std::chrono::steady_clock::time_point;
 
@@ -91,11 +92,11 @@ namespace Crystall::Search {
             RootSearchResult result;
 
             if (depth == 1) {
-                result = search_root(info, pos, depth, alpha, beta);
+                result = search_root(info, pos, depth, alpha, beta, best_move);
             }
             else {
                 while (true) {
-                    result = search_root(info, pos, depth, alpha, beta);
+                    result = search_root(info, pos, depth, alpha, beta, best_move);
 
                     if (Timer::should_stop_search()) break;
 
@@ -163,14 +164,15 @@ namespace Crystall::Search {
 
     namespace {
 
-        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
+        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& root_pv) {
             int best_score = NegativeInfinity;
             Move best_move;
 
             MoveList moves(pos);
-            moves.calculate_scores();
+            moves.calculate_scores(root_pv);
 
             int i = 0;
+            int legal_moves = 0;
             while (moves.next(i)) {
                 Move move = moves[i];
                 ++i;
@@ -178,7 +180,14 @@ namespace Crystall::Search {
                 bool is_legal = pos.attempt_move(move);
                 if (!is_legal) continue;
 
-                int score = -search_node(info, pos, depth - 1, -beta, -alpha);
+                int score;
+                if (legal_moves == 1) {
+                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
+                }
+                else {
+                    score = -search_node<false>(info, pos, depth - 1, -beta, -alpha);
+                }
+                    
                 pos.undo_move();
 
                 if (score > best_score) {
@@ -193,6 +202,7 @@ namespace Crystall::Search {
             return {best_move, best_score};
         }
 
+        template<bool is_pv>
         int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp) {
             ++info.nodes_searched;
 
@@ -253,8 +263,17 @@ namespace Crystall::Search {
 
                 ++legal_moves;
 
-                int score = -search_node(info, pos, depth - 1, -beta, -alpha, allow_nmp);
-                
+                int score;
+                if (legal_moves == 1 && is_pv) {
+                    // we dont allow nmp 
+                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
+                } else {
+                    score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
+
+                    if (score > alpha && score < beta)
+                        score = -search_node<false>(info, pos, depth - 1, -beta, -alpha);
+                }
+
                 pos.undo_move();
 
                 alpha = std::max(score, alpha);
