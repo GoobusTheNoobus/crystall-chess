@@ -133,7 +133,7 @@ namespace Crystall::Search {
             
             for (int i = 0; i < depth; ++i) {
                 auto entry = TranspositionTable::read(copy.get_key());
-                if (entry.depth > 0 && entry.best_move.is_valid()) {
+                if (entry.depth > 0 && entry.flag == TranspositionTable::Exact) {
                     Move move = entry.best_move;
 
                     if (!copy.attempt_move(move)) break;
