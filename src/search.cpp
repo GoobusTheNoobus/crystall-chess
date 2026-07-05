@@ -245,6 +245,21 @@ namespace Crystall::Search {
             bool in_check = pos.is_in_check();
             int static_eval = pos.evaluate();
 
+            // nmp
+            if (!is_pv && !in_check && allow_nmp && depth >= MinNMPDepth && static_eval >= beta && pos.has_non_pawn_material()) {
+
+                int reduction = NMPReduction; // TODO: make it a formula
+
+                pos.make_move(Move::NullMove);
+                int null_score = -search_node<false>(info, pos, depth - 1 - reduction, -beta, -beta + 1, false);
+                pos.undo_move();
+
+                if (null_score >= beta) {
+                    --info.plies_from_root;
+                    return beta;
+                }
+            }
+
             int best_score = NegativeInfinity;
             Move best_move;
             int legal_moves = 0;

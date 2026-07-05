@@ -661,4 +661,8 @@ namespace Crystall {
 
         return false;
     }
+
+    bool Position::has_non_pawn_material() const {
+        return color_bitboards[side_to_move] & ~(piece_bitboards[make_piece(Pawn, side_to_move)] | piece_bitboards[make_piece(King, side_to_move)]);
+    }
 }

@@ -114,6 +114,8 @@ namespace Crystall {
         bool attempt_move(const Move&);
         void undo_move();
 
+        bool has_non_pawn_material() const;
+
         int evaluate() const;
         bool is_repetition() const;
 
