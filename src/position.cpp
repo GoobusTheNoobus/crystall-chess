@@ -1,6 +1,6 @@
 #include "position.hpp"
 #include "move.hpp"
-#include "bit.hpp"
+#include "bitboards.hpp"
 #include "movelist.hpp"
 
 #include <sstream>

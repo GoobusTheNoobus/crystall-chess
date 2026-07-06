@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bit.hpp"
+#include "bitboards.hpp"
 
 namespace Crystall {
 

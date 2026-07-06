@@ -1,4 +1,4 @@
-#include "bit.hpp"
+#include "bitboards.hpp"
 
 namespace Crystall {
     namespace {

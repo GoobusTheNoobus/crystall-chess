@@ -2,7 +2,7 @@
 
 #include "eval.hpp"
 #include "position.hpp"
-#include "bit.hpp"
+#include "bitboards.hpp"
 #include "uci.hpp"
 #include "tt.hpp"
 
