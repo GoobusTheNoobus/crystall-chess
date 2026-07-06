@@ -78,10 +78,11 @@ namespace Crystall::Search {
         Move best_move;
         int score = 0;
 
+        // Iterative Deepening
         SearchInfo info;
         for (int depth = 1; depth <= max_depth; ++depth) {
 
-            bool log_currmove = Timer::elapsed() > 1000;
+            bool log_currmove = Timer::elapsed() > 500;
 
             info.seldepth = 0;
             info.previous_nodes_searched = info.nodes_searched;
