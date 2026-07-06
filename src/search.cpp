@@ -25,7 +25,7 @@ namespace Crystall::Search {
         template <bool is_pv>
         int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& move);
+        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& move, bool log_currmove);
 
         using Time = std::chrono::steady_clock::time_point;
 
@@ -81,6 +81,8 @@ namespace Crystall::Search {
         SearchInfo info;
         for (int depth = 1; depth <= max_depth; ++depth) {
 
+            bool log_currmove = Timer::elapsed() > 1000;
+
             info.seldepth = 0;
             info.previous_nodes_searched = info.nodes_searched;
 
@@ -92,11 +94,11 @@ namespace Crystall::Search {
             RootSearchResult result;
 
             if (depth == 1) {
-                result = search_root(info, pos, depth, alpha, beta, best_move);
+                result = search_root(info, pos, depth, alpha, beta, best_move, false);
             }
             else {
                 while (true) {
-                    result = search_root(info, pos, depth, alpha, beta, best_move);
+                    result = search_root(info, pos, depth, alpha, beta, best_move, log_currmove);
 
                     if (Timer::should_stop_search()) break;
 
@@ -164,7 +166,7 @@ namespace Crystall::Search {
 
     namespace {
 
-        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& root_pv) {
+        RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& root_pv, bool log_currmove) {
             int best_score = NegativeInfinity;
             Move best_move;
 
@@ -182,6 +184,10 @@ namespace Crystall::Search {
 
                 ++legal_moves;
 
+                if (log_currmove) {
+                    UCI::info_depth(depth, move, legal_moves);
+                }
+
                 int score;
                 if (legal_moves == 1) {
                     score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
@@ -191,6 +197,8 @@ namespace Crystall::Search {
                 }
                     
                 pos.undo_move();
+
+                if (Timer::should_stop_search()) break;
 
                 if (score > best_score) {
                     best_move = move;

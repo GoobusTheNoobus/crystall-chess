@@ -25,6 +25,10 @@ namespace Crystall {
             
             std::cout << std::endl;
         }
+
+        inline void info_depth(int depth, const Move& currmove, int currmovenumber) {
+            std::cout << "info depth " << depth << " currmove " << currmove.to_string() << " currmovenumber " << currmovenumber << std::endl;
+        }
         inline void info_string(const std::string& msg) { std::cout << "info string " << msg << std::endl; }
 
         void loop();
