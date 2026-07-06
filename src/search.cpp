@@ -180,6 +180,8 @@ namespace Crystall::Search {
                 bool is_legal = pos.attempt_move(move);
                 if (!is_legal) continue;
 
+                ++legal_moves;
+
                 int score;
                 if (legal_moves == 1) {
                     score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
@@ -283,6 +285,7 @@ namespace Crystall::Search {
                     // we dont allow nmp 
                     score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
                 } else {
+
                     score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
 
                     if (score > alpha && score < beta)

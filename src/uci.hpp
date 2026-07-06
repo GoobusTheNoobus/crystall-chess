@@ -15,9 +15,9 @@ namespace Crystall {
                          " seldepth " << seldepth <<
                          " score " << score_string(score) << 
                          " nodes " << nodes_this_iter << 
-                         " nps " << total_nodes * 1000 / std::max(1ULL, elapsed) << 
+                         " nps " << total_nodes * 1000 / std::max<u64>(1ULL, elapsed) << 
                          " hashfull " << TranspositionTable::hashfull() <<
-                         " time " << std::max(1ULL, elapsed) <<
+                         " time " << std::max<u64>(1ULL, elapsed) <<
                          " pv ";
             
             for (const Move& m: pv) 
