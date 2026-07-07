@@ -7,4 +7,5 @@ cutechess-cli -engine name=Base cmd=./crystall.exe ^
               -sprt alpha=0.05 beta=0.05 elo0=0 elo1=10 ^
               -concurrency 6 ^
               -repeat ^
-              -pgnout games.pgn
+              -pgnout games.pgn ^
+              -openings file=book.epd format=epd order=random

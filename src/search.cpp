@@ -255,6 +255,12 @@ namespace Crystall::Search {
 
             bool in_check = pos.is_in_check();
             int static_eval = pos.evaluate();
+            
+            // reversed futility pruning
+            if (!in_check && !is_pv && depth <= 3 && static_eval - 80 * depth >= beta) {
+                --info.plies_from_root;
+                return static_eval;
+            }
 
             // nmp
             if (!is_pv && !in_check && allow_nmp && depth >= MinNMPDepth && static_eval >= beta && pos.has_non_pawn_material()) {
@@ -284,6 +290,8 @@ namespace Crystall::Search {
                 Move move = moves[i];
                 ++i;
 
+                bool noisy = is_noisy(pos, move);
+
                 bool is_legal = pos.attempt_move(move);
                 if (!is_legal) continue;
 
@@ -291,9 +299,9 @@ namespace Crystall::Search {
 
                 int score;
                 if (legal_moves == 1 && is_pv) {
-                    // we dont allow nmp 
                     score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
-                } else {
+                } 
+                else {
 
                     score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
 
