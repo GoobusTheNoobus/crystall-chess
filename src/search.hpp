@@ -23,4 +23,6 @@ namespace Crystall::Search {
     void start(Position pos, int depth, int movetime);
     void stop();
     void clear_history_table();
+
+    void init();
 }

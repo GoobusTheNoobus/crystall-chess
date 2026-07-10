@@ -16,6 +16,8 @@ namespace Crystall::Search {
 
     namespace {
 
+        int reduction_table[2][256][MaxSearchDepth];
+
         constexpr int AspirationWindow = 130;
         constexpr int MaxQSearchDepth = 15;
         constexpr int MinNMPDepth = 3;
@@ -67,6 +69,16 @@ namespace Crystall::Search {
                         history_table[c][from][dest] /= 2;
                     }
                 }
+            }
+        }
+    }
+
+    void init() {
+        // Initialize reduction table
+        for (int m = 1; m < 256; ++m) {
+            for (int d = 1; d < MaxSearchDepth; ++d) {
+                reduction_table[false][m][d] = 0.18 * std::log(m) * std::log(d) + 0.48;
+                reduction_table[true][m][d]  = 0.12 * std::log(m) * std::log(d) + 0.42;
             }
         }
     }
@@ -303,7 +315,10 @@ namespace Crystall::Search {
                 } 
                 else {
 
-                    score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
+                    int reduction = 0;
+                    if (!(in_check || depth < 3 || legal_moves < 8)) reduction = reduction_table[noisy][legal_moves][depth];
+
+                    score = -search_node<false>(info, pos, depth - 1 - reduction, -alpha - 1, -alpha);
 
                     if (score > alpha && score < beta)
                         score = -search_node<false>(info, pos, depth - 1, -beta, -alpha);
