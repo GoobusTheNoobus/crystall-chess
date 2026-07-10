@@ -16,6 +16,9 @@ Crystall uses makefiles to compile its code. Navigate to project root, and use `
     - Aspiration Window
     - Move Ordering
     - 108MB Transposition Table
+    - Principle Variation Search
+    - Reversed Futility Pruning
+    - Late Move Reduction
 - Evaluation
     - PeSTO 
 
