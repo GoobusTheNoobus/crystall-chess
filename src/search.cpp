@@ -310,18 +310,18 @@ namespace Crystall::Search {
                 ++legal_moves;
 
                 int score;
-                if (legal_moves == 1 && is_pv) {
-                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
+                if (legal_moves == 1) {
+                    score = -search_node<is_pv>(info, pos, depth - 1, -beta, -alpha, false);
                 } 
                 else {
 
                     int reduction = 0;
-                    if (!(in_check || depth < 3 || legal_moves < 8)) reduction = reduction_table[noisy][legal_moves][depth];
+                    // if (!(in_check || depth < 3 || legal_moves < 8)) reduction = reduction_table[noisy][legal_moves][depth];
 
                     score = -search_node<false>(info, pos, depth - 1 - reduction, -alpha - 1, -alpha);
 
                     if (score > alpha && score < beta)
-                        score = -search_node<false>(info, pos, depth - 1, -beta, -alpha);
+                        score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
                 }
 
                 pos.undo_move();
