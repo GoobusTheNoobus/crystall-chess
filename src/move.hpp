@@ -7,8 +7,6 @@ namespace Crystall {
     struct Move {
         enum Type {
             Normal,
-            // double pawn pushes result in an active en passant square,
-            // so it's more efficient to have a seperate move flag
             DoublePawnPush, 
             Castling,
             EnPassant,
@@ -25,7 +23,7 @@ namespace Crystall {
         Type flag_;
 
         public:
-        // lookups
+        // Move lookups
         inline Square from() const { return from_; }
         inline Square dest() const { return dest_; }
         inline Type flag() const { return flag_; }

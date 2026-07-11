@@ -19,7 +19,7 @@ namespace Crystall::Search {
         int score = 0;
     };
 
-    // we copy the position during search
+    // We copy the position during search
     void start(Position pos, int depth, int movetime);
     void stop();
     void clear_history_table();

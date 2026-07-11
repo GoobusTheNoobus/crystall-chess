@@ -1,7 +1,9 @@
 #include "bitboards.hpp"
 
 namespace Crystall {
+
     namespace {
+
         constexpr u64 KnightAttacks[SquareNB] = {
             0x0000000000020400ULL, 0x0000000000050800ULL, 0x00000000000A1100ULL, 0x0000000000142200ULL,
             0x0000000000284400ULL, 0x0000000000508800ULL, 0x0000000000A01000ULL, 0x0000000000402000ULL,
@@ -198,7 +200,7 @@ namespace Crystall {
             81920, 86016, 88064, 90112, 92160, 94208, 96256, 98304,
         };
 
-        // we initialize these tables at runtime using init
+        // We initialize these tables at runtime using Bitboards::init()
         u64 BishopAttacks[5248];
         u64 RookAttacks[102400];
 
@@ -291,7 +293,8 @@ namespace Crystall {
         void init() {
 
             for (Square square = A1; square < SquareNB; square = Square(square + 1)) {
-                // init bishop
+
+                // Initialize Bishop
                 for (int i = 0; i < (1 << BishopRelevancies[square]); ++i) {
                     u64 blockers = generate_blocker_from_index(i, BishopMasks[square]);
                     u64 attacks  = raycast_bishop(square, blockers);
@@ -300,7 +303,7 @@ namespace Crystall {
                     BishopAttacks[index] = attacks;
                 }
 
-                // init rook
+                // Initialize Rook
                 for (int i = 0; i < (1 << RookRelevancies[square]); ++i) {
                     u64 blockers = generate_blocker_from_index(i, RookMasks[square]);
                     u64 attacks  = raycast_rook(square, blockers);
@@ -310,6 +313,8 @@ namespace Crystall {
                 }
             }
         }
+
+        // Lookup functions
 
         u64 knight_attacks(Square square) { return KnightAttacks[square]; }
         u64 king_attacks(Square square) { return KingAttacks[square]; }

@@ -8,6 +8,7 @@ namespace Crystall {
     namespace {
 
         // Move Valuable Victim to Least Valuable Attacker
+        // Used for move ordering
         constexpr int MVVLVATable[PieceTypeNB][PieceTypeNB] = {
             { 809000, 831000, 832000, 849000, 889000, 999000 },
             { 806800, 828800, 829800, 846800, 886800, 996800 },
@@ -19,9 +20,6 @@ namespace Crystall {
 
         constexpr int PromotionScoreTable[4] = { 790000, 750000, 732000, 731000 };
         
-        /**
-         * @param special_move can be TT or PV
-         */
         constexpr int MaxMoveScore = 1000000;
         int score_move(const Position& pos, const Move& move, const Move& special_move) {
             if (move == special_move) return MaxMoveScore;

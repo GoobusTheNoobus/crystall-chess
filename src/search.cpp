@@ -23,7 +23,7 @@ namespace Crystall::Search {
         constexpr int MinNMPDepth = 3;
         constexpr int NMPReduction = 2;
 
-        // declare functions
+        // Declare functions
         template <bool is_pv>
         int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
         int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
@@ -115,21 +115,21 @@ namespace Crystall::Search {
 
                     if (Timer::should_stop_search()) break;
 
-                    // fail low
+                    // Fail low
                     if (result.score <= alpha) {
                         alpha -= delta;
                         delta *= 2;
                         continue;
                     }
 
-                    // fail high
+                    // Fail high
                     if (result.score >= beta) {
                         beta += delta;
                         delta *= 2;
                         continue;
                     }
 
-                    // inside window
+                    // Inside window
                     break;
                 }
             }
@@ -219,7 +219,7 @@ namespace Crystall::Search {
                 }
 
                 alpha = std::max(alpha, best_score);
-                if (alpha >= beta) break; // not possible yet, since beta is passed as infinity
+                if (alpha >= beta) break;
             }
 
             return {best_move, best_score};
@@ -244,7 +244,7 @@ namespace Crystall::Search {
 
             if (Timer::should_stop_search()) return Timeout;
 
-            // tt probe
+            // TT Probe
 
             auto entry = TranspositionTable::read(pos.get_key());
             Move tt_move;
@@ -272,13 +272,13 @@ namespace Crystall::Search {
             bool in_check = pos.is_in_check();
             int static_eval = pos.evaluate();
             
-            // reversed futility pruning
+            // Reversed futility pruning
             if (!in_check && !is_pv && depth <= 3 && static_eval - 80 * depth >= beta) {
                 --info.plies_from_root;
                 return static_eval;
             }
 
-            // nmp
+            // Null move pruning
             if (!is_pv && !in_check && allow_nmp && depth >= MinNMPDepth && static_eval >= beta && pos.has_non_pawn_material()) {
 
                 int reduction = NMPReduction; // TODO: make it a formula
@@ -334,7 +334,7 @@ namespace Crystall::Search {
                     best_move = move;
                 }
 
-                // alpha beta pruning
+                // Alpha Beta Pruning
                 if (alpha >= beta) {
                     if (!is_noisy(pos, move)) {
                         history_table[pos.get_side_to_move()][move.from()][move.dest()] += depth * depth;
@@ -372,7 +372,7 @@ namespace Crystall::Search {
             bool in_check = pos.is_in_check();
             int static_eval = pos.evaluate();
 
-            // if we are not in check and qsearch budget is exhausted, standpat
+            // If we are not in check and qsearch budget is exhausted, standpat
             if (depth <= 0 && !in_check) return static_eval;
 
             if (!in_check && static_eval >= beta) {

@@ -42,15 +42,16 @@ namespace Crystall {
 
     constexpr char StartingPositionFen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    // position representation
+    // Position Representation
+
     struct GameState {
         Square en_passant_square = NoSquare;
         int castling_rights = 0;
         int rule50_clock = 0;
     };
 
-    // a struct that represents the information needed to undo 
-    // a move. should be stored in stack
+    // A struct that represents the information needed to undo 
+    // a move. Should be stored in stack
     struct MoveUndoInfo {
         u64 key;
         Move move;
@@ -62,7 +63,7 @@ namespace Crystall {
 
     class Position {
 
-        // members
+        // Members
 
         // board representation
         Piece board[SquareNB];
@@ -89,7 +90,7 @@ namespace Crystall {
         void parse_fen(const std::string& fen);
         std::string to_string() const;
 
-        // lookups
+        // Lookups
         inline Piece get_piece_on(Square s) const { return board[int(s)]; }
         inline u64 get_bitboard(Color c) const { return color_bitboards[int(c)]; }
         inline u64 get_bitboard(Piece p) const { return piece_bitboards[int(p)]; }
@@ -102,12 +103,10 @@ namespace Crystall {
         inline bool is_rule_50() const { return state.rule50_clock >= 100; }
         inline u64 get_key() const { return hash; }
 
-        // big boy functions 
         bool is_attacked(Square, Color by) const;
         bool is_in_check(Color) const;
         bool is_in_check() const;
 
-        // bigger boy functions
         int generate_pseudo_legal_moves(Move[]) const;
         void make_move(const Move&);
         void make_move(const std::string&);
@@ -119,7 +118,6 @@ namespace Crystall {
         int evaluate() const;
         bool is_repetition() const;
 
-        // helper functions
         private:
 
         void clear();

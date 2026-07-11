@@ -6,10 +6,13 @@ namespace Crystall {
 
     namespace Evaluation {
 
+        // Given to the side to move as a small bonus
         constexpr int TempoBonus = 16;
 
         constexpr int MaxPhase = 24;
         constexpr static int PhaseInc[PieceNB] = {0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}; 
+
+        // PeSTO style evaluation function
 
         struct TaperedScore {
             int mg_score = 0;
@@ -36,7 +39,7 @@ namespace Crystall {
         constexpr int EGValues[PieceTypeNB] = {PawnValueEG, KnightValueEG, BishopValueEG, RookValueEG, QueenValueEG};
 
         inline int MGTables[PieceTypeNB][SquareNB] = {
-            // pawn
+            // Pawn
             {
                   0,   0,   0,   0,   0,   0,  0,   0,
                  98, 134,  61,  95,  68, 126, 34, -11,
@@ -48,7 +51,7 @@ namespace Crystall {
                   0,   0,   0,   0,   0,   0,  0,   0,
             },
 
-            // knight
+            // Knight
             {
                 -167, -89, -34, -49,  61, -97, -15, -107,
                  -73, -41,  72,  36,  23,  62,   7,  -17,
@@ -60,7 +63,7 @@ namespace Crystall {
                 -105, -21, -58, -33, -17, -28, -19,  -23,
             },
 
-            // bishop
+            // Bishop
             {
                 -29,   4, -82, -37, -25, -42,   7,  -8,
                 -26,  16, -18, -13,  30,  59,  18, -47,
@@ -72,7 +75,7 @@ namespace Crystall {
                 -33,  -3, -14, -21, -13, -12, -39, -21,
             },
 
-            // rook
+            // Rook
             {
                 32,  42,  32,  51, 63,  9,  31,  43,
                 27,  32,  58,  62, 80, 67,  26,  44,
@@ -84,7 +87,7 @@ namespace Crystall {
                -19, -13,   1,  17, 16,  7, -37, -26,
             },
 
-            // queen
+            // Queen
             {
                 -28,   0,  29,  12,  59,  44,  43,  45,
                 -24, -39,  -5,   1, -16,  57,  28,  54,
@@ -96,7 +99,7 @@ namespace Crystall {
                  -1, -18,  -9,  10, -15, -25, -31, -50,
             },
 
-            // king
+            // King
             {
                 -65,  23,  16, -15, -56, -34,   2,  13,
                  29,  -1, -20,  -7,  -8,  -4, -38, -29,
@@ -110,7 +113,7 @@ namespace Crystall {
         };
 
         inline int EGTables[PieceTypeNB][SquareNB] = {
-            // pawn
+            // Pawn
             {
                   0,   0,   0,   0,   0,   0,   0,   0,
                 178, 173, 158, 134, 147, 132, 165, 187,
@@ -122,7 +125,7 @@ namespace Crystall {
                   0,   0,   0,   0,   0,   0,   0,   0,
             },
 
-            // knight
+            // Knight
             {
                 -58, -38, -13, -28, -31, -27, -63, -99,
                 -25,  -8, -25,  -2,  -9, -25, -24, -52,
@@ -134,7 +137,7 @@ namespace Crystall {
                 -29, -51, -23, -15, -22, -18, -50, -64,
             },
 
-            // bishop
+            // Bishop
             {
                 -14, -21, -11,  -8, -7,  -9, -17, -24,
                  -8,  -4,   7, -12, -3, -13,  -4, -14,
@@ -146,7 +149,7 @@ namespace Crystall {
                 -23,  -9, -23,  -5, -9, -16,  -5, -17,
             },
 
-            // rook
+            // Rook
             {
                 13, 10, 18, 15, 12,  12,   8,   5,
                 11, 13, 13, 11, -3,   3,   8,   3,
@@ -158,7 +161,7 @@ namespace Crystall {
                 -9,  2,  3, -1, -5, -13,   4, -20,
             },
 
-            // queen
+            // Queen
             {
                  -9,  22,  22,  27,  27,  19,  10,  20,
                 -17,  20,  32,  41,  58,  25,  30,   0,
@@ -170,7 +173,7 @@ namespace Crystall {
                 -33, -28, -22, -43,  -5, -32, -20, -41,
             },
 
-            // king
+            // King
             {
                 -74, -35, -18, -18, -11,  15,   4, -17,
                 -12,  17,  14,  17,  17,  38,  23,  11,
@@ -182,6 +185,8 @@ namespace Crystall {
                 -53, -34, -21, -11, -28, -14, -24, -43
             }
         };
+
+        // We add the base material value to the tables during init
 
         inline void init() {
 

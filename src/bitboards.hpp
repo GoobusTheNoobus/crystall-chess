@@ -4,6 +4,8 @@
 
 namespace Crystall {
 
+    // Helpers
+
     inline int ctz(u64 bb) { return __builtin_ctzll(bb); }
     inline int cnt(u64 bb) { return __builtin_ctzll(bb); }
     inline int poplsb(u64& bb) {
@@ -13,6 +15,8 @@ namespace Crystall {
     }
 
     namespace Bitboards {
+
+        // Rank File and Square Masks
 
         constexpr u64 RankBB[RankNB] = {
             0x00000000000000FFULL, 0x000000000000FF00ULL, 0x0000000000FF0000ULL, 0x00000000FF000000ULL,
@@ -35,6 +39,9 @@ namespace Crystall {
             1ULL << 56, 1ULL << 57, 1ULL << 58, 1ULL << 59, 1ULL << 60, 1ULL << 61, 1ULL << 62, 1ULL << 63,
         };
 
+        // Lookup functions
+        // The table is in bitboards.cpp, so their definition is too
+
         u64 knight_attacks(Square);
         u64 king_attacks(Square);
         u64 pawn_attacks(Square, Color);
@@ -42,6 +49,7 @@ namespace Crystall {
         u64 rook_attack(Square, u64 occ); 
         u64 queen_attack(Square, u64 occ);
 
+        // Initialize rook and bishop tables at runtime
         void init();
     }
 

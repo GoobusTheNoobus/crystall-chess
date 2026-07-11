@@ -1,7 +1,7 @@
 @echo off
 
-fastchess.exe -engine name=Base cmd=./crystall.exe ^
-              -engine name=New  cmd=./crystall_new.exe ^
+fastchess.exe -engine name=Home cmd=./crystall.exe ^
+              -engine name=Guest cmd=./stash10.exe ^
               -each tc=10+0.1 proto=uci ^
               -rounds 1000 ^
               -sprt alpha=0.05 beta=0.05 elo0=0 elo1=10 ^

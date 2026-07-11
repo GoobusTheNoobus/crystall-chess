@@ -226,7 +226,7 @@ namespace Crystall {
     }
 
     namespace {
-        // helpers for movegen
+        // Helpers for move generation
         void add(int& i, Move* arr, Move m) {
             arr[i++] = m;
         }
