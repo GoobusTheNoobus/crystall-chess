@@ -8,4 +8,4 @@ fastchess.exe -engine name=Base cmd=./crystall.exe ^
               -concurrency 6 ^
               -repeat ^
               -pgnout file=games.pgn ^
-              -openings file=book.epd format=epd order=random
+              -openings file=book.epd format=epd order=random ^

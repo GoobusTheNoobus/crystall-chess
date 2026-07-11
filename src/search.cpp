@@ -248,21 +248,25 @@ namespace Crystall::Search {
 
             auto entry = TranspositionTable::read(pos.get_key());
             Move tt_move;
-            if (entry.depth != 0 && entry.depth >= depth && entry.key == pos.get_key()) {
-                if (entry.flag == TranspositionTable::Exact) {
-                    --info.plies_from_root;
-                    return entry.score;
-                }
-                    
-                else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
-                else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
-
-                if (alpha >= beta) {
-                    --info.plies_from_root;
-                    return entry.score;
-                }
+            if (entry.depth != 0 && entry.key == pos.get_key()) {
 
                 tt_move = entry.best_move;
+
+                if (entry.depth >= depth) {
+                        if (entry.flag == TranspositionTable::Exact) {
+                        --info.plies_from_root;
+                        return entry.score;
+                    }
+                        
+                    else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
+                    else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
+
+                    if (alpha >= beta) {
+                        --info.plies_from_root;
+                        return entry.score;
+                    }
+                }
+                
             }
 
             bool in_check = pos.is_in_check();
@@ -315,10 +319,7 @@ namespace Crystall::Search {
                 } 
                 else {
 
-                    int reduction = 0;
-                    // if (!(in_check || depth < 3 || legal_moves < 8)) reduction = reduction_table[noisy][legal_moves][depth];
-
-                    score = -search_node<false>(info, pos, depth - 1 - reduction, -alpha - 1, -alpha);
+                    score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
 
                     if (score > alpha && score < beta)
                         score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
