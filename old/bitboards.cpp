@@ -314,8 +314,6 @@ namespace Crystall {
             }
         }
 
-        // Lookup functions
-
         u64 knight_attacks(Square square) { return KnightAttacks[square]; }
         u64 king_attacks(Square square) { return KingAttacks[square]; }
         u64 pawn_attacks(Square square, Color color) { return color == White ? WhitePawnAttacks[square] : BlackPawnAttacks[square]; }
