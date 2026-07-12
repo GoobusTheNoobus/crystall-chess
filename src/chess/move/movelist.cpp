@@ -1,4 +1,5 @@
 #include "chess/move/movelist.hpp"
+#include "engine/search/search.hpp"
 
 namespace Crystall {
 
@@ -35,7 +36,8 @@ namespace Crystall {
                 return promo_score;
             }
 
-            return 0;
+            int history_score = Search::history_table[pos.get_side_to_move()][from][dest];
+            return history_score;
         }
     }
 
@@ -47,7 +49,7 @@ namespace Crystall {
 
     void MoveList::calculate_scores() {
         for (int i = 0; i < size_; ++i) {
-            scores[i] = score_move(pos, moves[i], Move());
+            scores[i] = score_move(pos, moves[i], Move::NullMove);
         }
     }
 }

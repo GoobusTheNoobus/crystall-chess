@@ -140,6 +140,7 @@ namespace Crystall {
         state.castling_rights = 0;
         state.en_passant_square = NoSquare;
         state.rule50_clock = 0;
+        ply = 0;
         hash = 0;
         psqt_scores = { 0, 0 };
     }
