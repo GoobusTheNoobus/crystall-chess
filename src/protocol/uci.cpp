@@ -25,8 +25,8 @@ namespace Crystall::UCI {
         std::cout << std::endl;
     }
 
-    void info_depth(int depth, const Move& currmove, int currmovenumber) {
-        std::cout << "info depth " << depth << " currmove " << currmove.to_string() << " currmovenumber " << currmovenumber << std::endl;
+    void info_depth(int depth, u64 elasped, const Move& currmove, int currmovenumber) {
+        std::cout << "info depth " << depth << " time " << elasped << " currmove " << currmove.to_string() << " currmovenumber " << currmovenumber << std::endl;
     }
     void info_string(const std::string& msg) { std::cout << "info string " << msg << std::endl; }
 

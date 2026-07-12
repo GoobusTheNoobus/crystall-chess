@@ -1,8 +1,8 @@
 #include "engine/search/search.hpp"
 #include "protocol/uci.hpp"
 #include "chess/move/movelist.hpp"
-#include "engine/search/tt.hpp"
-#include "engine/search/timer.hpp"
+#include "engine/tt/tt.hpp"
+#include "engine/timer.hpp"
 #include "engine/search/history.hpp"
 
 #include <chrono>
@@ -20,8 +20,6 @@ namespace Crystall::Search {
         constexpr int MaxQSearchDepth = 15;
         constexpr int MinNMPDepth = 3;
         constexpr int NMPReduction = 2;
-
-        
     }
 
     void init() {
@@ -52,7 +50,7 @@ namespace Crystall::Search {
             ++legal_moves;
 
             if (log_currmove) {
-                UCI::info_depth(depth, move, legal_moves);
+                UCI::info_depth(depth, Timer::elapsed(), move, legal_moves);
             }
 
             int score;
@@ -90,7 +88,8 @@ namespace Crystall::Search {
         }
 
         if (info.nodes_searched % 100000 == 0) {
-            History::clear();
+            History::normalize();
+            Butterfly::normalize();
         }
 
         ++info.plies_from_root;
@@ -160,6 +159,8 @@ namespace Crystall::Search {
             if (!is_legal) continue;
 
             ++legal_moves;
+
+            Butterfly::add(opposite(pos.get_side_to_move()), move.from(), move.dest());
 
             int score;
             if (legal_moves == 1) {

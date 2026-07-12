@@ -1,6 +1,6 @@
 #include "engine/engine.hpp"
-#include "engine/search/tt.hpp"
-#include "engine/search/timer.hpp"
+#include "engine/tt/tt.hpp"
+#include "engine/timer.hpp"
 #include "engine/search/search.hpp"
 
 namespace Crystall::Engine {

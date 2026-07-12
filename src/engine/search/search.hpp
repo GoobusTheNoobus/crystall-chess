@@ -2,7 +2,7 @@
 
 #include "chess/types.hpp"
 #include "chess/board/position.hpp"
-#include "engine/search/timer.hpp"
+#include "engine/timer.hpp"
 
 namespace Crystall::Search {
     constexpr int MaxSearchDepth = 32;

@@ -1,5 +1,5 @@
 #include "engine/search/search.hpp"
-#include "engine/search/timer.hpp"
+#include "engine/timer.hpp"
 #include "chess/move/movelist.hpp"
 
 namespace Crystall::Search {

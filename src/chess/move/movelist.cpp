@@ -35,7 +35,7 @@ namespace Crystall {
                 return promo_score;
             }
 
-            int history_score = Search::History::table[pos.get_side_to_move()][from][dest];
+            int history_score = Search::History::table[pos.get_side_to_move()][from][dest] / std::max(Search::Butterfly::table[pos.get_side_to_move()][from][dest], 1);
             return history_score;
         }
     }

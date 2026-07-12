@@ -1,6 +1,6 @@
 #include "engine/search/search.hpp"
-#include "engine/search/timer.hpp"
-#include "engine/search/tt.hpp"
+#include "engine/timer.hpp"
+#include "engine/tt/tt.hpp"
 #include "protocol/uci.hpp"
 
 namespace Crystall::Search {

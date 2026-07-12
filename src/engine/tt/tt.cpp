@@ -1,4 +1,4 @@
-#include "engine/search/tt.hpp"
+#include "engine/tt/tt.hpp"
 
 #include <cstring>
 
