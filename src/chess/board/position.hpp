@@ -12,8 +12,6 @@ namespace Crystall {
 
     constexpr char StartingPositionFen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    // Position Representation
-
     struct GameState {
         Square en_passant_square = NoSquare;
         int castling_rights = 0;
@@ -31,26 +29,20 @@ namespace Crystall {
 
     class Position {
 
-        // Members
-
-        // board representation
         Piece board[SquareNB];
         u64 piece_bitboards[PieceNB];
         u64 color_bitboards[ColorNB];
         u64 occupancy = 0;
 
-        // game states
         Color side_to_move;
         GameState state;
         u64 hash = 0;
 
-        // stack(s)
         MoveUndoInfo move_undo_stack[1024];
         int ply = 0;
 
         Evaluation::TaperedScore psqt_scores;
 
-        // public functions & constructors
         public:
 
         Position();
@@ -58,7 +50,6 @@ namespace Crystall {
         void parse_fen(const std::string& fen);
         std::string to_string() const;
 
-        // Lookups
         inline Piece get_piece_on(Square s) const { return board[int(s)]; }
         inline u64 get_bitboard(Color c) const { return color_bitboards[int(c)]; }
         inline u64 get_bitboard(Piece p) const { return piece_bitboards[int(p)]; }

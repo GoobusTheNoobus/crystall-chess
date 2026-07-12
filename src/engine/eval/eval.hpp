@@ -6,13 +6,10 @@ namespace Crystall {
 
     namespace Evaluation {
 
-        // Given to the side to move as a small bonus
         constexpr int TempoBonus = 16;
 
         constexpr int MaxPhase = 24;
         constexpr static int PhaseInc[PieceNB] = {0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}; 
-
-        // PeSTO style evaluation function
 
         struct TaperedScore {
             int mg_score = 0;
@@ -185,8 +182,6 @@ namespace Crystall {
                 -53, -34, -21, -11, -28, -14, -24, -43
             }
         };
-
-        // We add the base material value to the tables during init
 
         inline void init() {
 

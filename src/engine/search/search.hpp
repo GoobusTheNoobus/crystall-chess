@@ -2,10 +2,10 @@
 
 #include "chess/types.hpp"
 #include "chess/board/position.hpp"
+#include "engine/search/timer.hpp"
 
 namespace Crystall::Search {
     constexpr int MaxSearchDepth = 32;
-    inline int history_table[ColorNB][SquareNB][SquareNB];
 
     struct SearchInfo {
         u64 nodes_searched = 0;
@@ -19,10 +19,17 @@ namespace Crystall::Search {
         int score = 0;
     };
 
-    // We copy the position during search
-    void start(Position pos, int depth, int movetime);
-    void stop();
-    void clear_history_table();
+    void run_iterative_deepening(Position pos, int depth, int movetime);
+    inline void stop() { Timer::request_stop(); }
+
+    template <bool is_pv>
+    int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
+    int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
+    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& move, bool log_currmove);
+
+    inline bool is_noisy(const Position& pos, const Move& move) {
+        return move.flag() >= Move::EnPassant || pos.get_piece_on(move.dest()) != NoPiece;
+    }
 
     void init();
 }

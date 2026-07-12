@@ -31,8 +31,6 @@ namespace Crystall {
         NoPiece
     };
 
-    // Type helpers
-
     inline Piece make_piece(PieceType pt, Color c) { return Piece(c * 6 + pt); }
     inline PieceType type_of(Piece p) { return PieceType(p % 6); }
     inline Color color_of(Piece p) { return Color(p / 6); }

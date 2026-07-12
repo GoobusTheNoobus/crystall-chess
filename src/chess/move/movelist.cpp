@@ -1,12 +1,11 @@
 #include "chess/move/movelist.hpp"
 #include "engine/search/search.hpp"
+#include "engine/search/history.hpp"
 
 namespace Crystall {
 
     namespace {
 
-        // Move Valuable Victim to Least Valuable Attacker
-        // Used for move ordering
         constexpr int MVVLVATable[PieceTypeNB][PieceTypeNB] = {
             { 809000, 831000, 832000, 849000, 889000, 999000 },
             { 806800, 828800, 829800, 846800, 886800, 996800 },
@@ -36,7 +35,7 @@ namespace Crystall {
                 return promo_score;
             }
 
-            int history_score = Search::history_table[pos.get_side_to_move()][from][dest];
+            int history_score = Search::History::table[pos.get_side_to_move()][from][dest];
             return history_score;
         }
     }

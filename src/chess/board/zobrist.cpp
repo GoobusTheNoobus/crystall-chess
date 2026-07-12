@@ -1,7 +1,6 @@
 #include "chess/board/zobrist.hpp"
 #include <random>
 
-// Fill all variables with random values
 void Crystall::Zobrist::init() {
     std::mt19937_64 rng(67);
 

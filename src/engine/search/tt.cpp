@@ -8,7 +8,7 @@ namespace Crystall {
         int index = get_index(key);
         Entry& entry = data[index];
 
-        return entry.key == key ? entry : Entry::NullEntry;
+        return entry.key == key ? entry : NullEntry;
     }
 
     void TranspositionTable::write(u64 key, Move& best_move, int score, uint8_t depth, EntryType flag) {
@@ -33,5 +33,4 @@ namespace Crystall {
         std::memset(data, 0, sizeof(data));
     }
 
-    const TranspositionTable::Entry TranspositionTable::Entry::NullEntry = {};
 }

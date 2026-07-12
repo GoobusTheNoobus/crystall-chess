@@ -4,7 +4,8 @@
 #include <chrono>
 #include <atomic>
 
-namespace Crystall {
+namespace Crystall::Search {
+
     using Time = std::chrono::steady_clock::time_point;
 
     struct Timer {

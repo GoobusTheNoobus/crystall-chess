@@ -21,7 +21,6 @@ namespace Crystall {
             uint8_t depth = 0;
             EntryType flag = Exact;
 
-            static const Entry NullEntry;
         };
 
         namespace {
@@ -39,5 +38,6 @@ namespace Crystall {
 
         int hashfull();
         
+        const static Entry NullEntry = {0, Move::NullMove, 0, 0, Exact};
     };
 }

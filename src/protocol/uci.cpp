@@ -1,22 +1,42 @@
 #include "protocol/uci.hpp"
 #include "chess/board/position.hpp"
+#include "engine/engine.hpp"
 #include "engine/search/search.hpp"
+#include "engine/search/history.hpp"
 
 #include <thread>
 #include <sstream>
 
 namespace Crystall::UCI {
 
+    void info_depth(int depth, int seldepth, int score, u64 nodes_this_iter, u64 elapsed, u64 total_nodes, const std::vector<Move>& pv) {
+        std::cout << "info depth " << depth <<
+                        " seldepth " << seldepth <<
+                        " score " << score_string(score) << 
+                        " nodes " << nodes_this_iter << 
+                        " nps " << total_nodes * 1000 / std::max<u64>(1ULL, elapsed) << 
+                        " hashfull " << TranspositionTable::hashfull() <<
+                        " time " << std::max<u64>(1ULL, elapsed) <<
+                        " pv ";
+        
+        for (const Move& m: pv) 
+            std::cout << m.to_string() << ' ';
+        
+        std::cout << std::endl;
+    }
+
+    void info_depth(int depth, const Move& currmove, int currmovenumber) {
+        std::cout << "info depth " << depth << " currmove " << currmove.to_string() << " currmovenumber " << currmovenumber << std::endl;
+    }
+    void info_string(const std::string& msg) { std::cout << "info string " << msg << std::endl; }
+
     namespace {
 
-    // Current position object, controlled via the position UCI command
     Position position;
-
-    // We run the search on a different thread so main thread can stay on UCI loop
     std::thread search_thread;
 
     void stop() {
-        Search::stop();
+        Engine::stop();
 
         if (search_thread.joinable()) {
             search_thread.join();
@@ -65,7 +85,6 @@ namespace Crystall::UCI {
 
         int time_limit = 0;
 
-        // Movetime parameter has priority over other
         if (movetime > 0) {
             time_limit = movetime;
         }
@@ -80,13 +99,7 @@ namespace Crystall::UCI {
         if (depth < 1 || depth > Search::MaxSearchDepth) depth = Search::MaxSearchDepth;
         
         search_thread = std::thread([depth, time_limit]() {
-            try {
-                Search::start(position, depth, time_limit);
-            } catch (const std::exception& e) {
-                std::cout << "Search crashed: " << e.what() << std::endl;
-            } catch (...) {
-                std::cout << "Search crashed due to unknown causes" << std::endl;
-            }
+            Engine::start(position, depth, time_limit);
         });
     }
 
@@ -121,7 +134,7 @@ namespace Crystall::UCI {
     }
     void ucinewgame() {
         TranspositionTable::clear();
-        Search::clear_history_table();
+        Search::History::clear();
     }
 
     void dispatch(const std::string& cmd, std::istringstream& iss) {

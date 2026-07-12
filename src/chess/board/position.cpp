@@ -15,15 +15,12 @@ namespace Crystall {
         return os;
     }
 
-    // Default constructor sets up starting position
     Position::Position() {
         Bitboards::init();
         Zobrist::init();
         parse_fen(StartingPositionFen);
     }
 
-    // Parses a FEN position. 
-    // An invalid FEN leads to undefined behavior
     void Position::parse_fen(const std::string& fen) {
         clear();
 
@@ -159,7 +156,6 @@ namespace Crystall {
         color_bitboards[color] &= mask;
         occupancy &= mask;
 
-        // change psqt values
         PieceType pt = type_of(piece_already_there);
         if (color == White) {
             psqt_scores.mg_score -= Evaluation::MGTables[pt][square ^ 56];
@@ -169,13 +165,9 @@ namespace Crystall {
             psqt_scores.eg_score += Evaluation::EGTables[pt][square];
         }
 
-        // update hash
         hash ^= Zobrist::PieceSquareKeys[piece_already_there][square];
     }
 
-    // This assumes that the square is empty
-    // If you are not sure that the square is empty, 
-    // clear it first in case
     void Position::place_piece(Square square, Piece piece) {
         if (piece == NoPiece) {
             clear_square(square);
@@ -191,7 +183,6 @@ namespace Crystall {
         color_bitboards[color] |= mask;
         occupancy |= mask;
 
-        // change psqt values
         PieceType pt = type_of(piece);
         if (color == White) {
             psqt_scores.mg_score += Evaluation::MGTables[pt][square ^ 56];
@@ -201,7 +192,6 @@ namespace Crystall {
             psqt_scores.eg_score -= Evaluation::EGTables[pt][square];
         }
 
-        // update hash
         hash ^= Zobrist::PieceSquareKeys[piece][square];
     }
 
@@ -303,7 +293,7 @@ namespace Crystall {
                 break;
             }
 
-            default: { // promotions
+            default: {
                 constexpr static PieceType PromoPieces[] = {Queen, Rook, Bishop, Knight};
 
                 clear_square(from);
@@ -313,7 +303,6 @@ namespace Crystall {
             }
         }
 
-        // update castling rights
         if (from == A1 || dest == A1) state.castling_rights &= ~CastlingWQ;
         if (from == A8 || dest == A8) state.castling_rights &= ~CastlingBQ;
         if (from == H1 || dest == H1) state.castling_rights &= ~CastlingWK;
@@ -331,7 +320,6 @@ namespace Crystall {
         if (captured_piece != NoPiece || moving_pt == Pawn) state.rule50_clock = 0;
         else state.rule50_clock++;
 
-        // std::cerr << "MOVE " << move.to_string() << ": hash " << std::hex << hash_before << " -> " << hash << std::dec << " (ply=" << ply << ")\n";
     }
 
     void Position::make_move(const std::string& move_str) {
@@ -436,7 +424,6 @@ namespace Crystall {
     bool Position::is_repetition() const {
         u64 key = hash;
 
-        // no repetition possible if there isn't enough history
         if (ply < 2) return false;
 
         int count = 0;
@@ -444,14 +431,8 @@ namespace Crystall {
         for (int i = ply - 2; i >= std::max(0, ply - state.rule50_clock); i -= 2) {
             if (move_undo_stack[i].key == key) {
                 ++count;
-                // std::cerr << "DEBUG: Found matching hash at ply " << i << ", count now " << count << " (current ply=" << ply << ", hash=" << std::hex << key << std::dec << ")\n";
             }
             if (count >= 2) {
-                /*std::cerr << "DEBUG: THREEFOLD DETECTED at ply " << ply << " (rule50_clock=" << state.rule50_clock << ")\n";
-                for (int j = ply - 2; j >= std::max(0, ply - state.rule50_clock); j -= 2) {
-                    std::cout << "DEBUG: ply " << j << ": hash=" << std::hex << move_undo_stack[j].key << std::dec << ", move=" << move_undo_stack[j].move.to_string() << "\n";
-                }
-                std::abort();*/
                 return true;
             }
         }

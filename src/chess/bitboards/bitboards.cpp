@@ -200,7 +200,6 @@ namespace Crystall {
             81920, 86016, 88064, 90112, 92160, 94208, 96256, 98304,
         };
 
-        // We initialize these tables at runtime using Bitboards::init()
         u64 BishopAttacks[5248];
         u64 RookAttacks[102400];
 
@@ -210,7 +209,7 @@ namespace Crystall {
 
         bool out_of_bounds(int x, int y) { return unsigned(x) >= 8 || unsigned(y) >= 8; }
 
-        // This makes sure that every index is mapped to a unique blocker combination
+
         u64 generate_blocker_from_index(int index, u64 mask) {
             u64 blocker = 0;
             int n = 0;
@@ -294,7 +293,6 @@ namespace Crystall {
 
             for (Square square = A1; square < SquareNB; square = Square(square + 1)) {
 
-                // Initialize Bishop
                 for (int i = 0; i < (1 << BishopRelevancies[square]); ++i) {
                     u64 blockers = generate_blocker_from_index(i, BishopMasks[square]);
                     u64 attacks  = raycast_bishop(square, blockers);
@@ -303,7 +301,6 @@ namespace Crystall {
                     BishopAttacks[index] = attacks;
                 }
 
-                // Initialize Rook
                 for (int i = 0; i < (1 << RookRelevancies[square]); ++i) {
                     u64 blockers = generate_blocker_from_index(i, RookMasks[square]);
                     u64 attacks  = raycast_rook(square, blockers);
