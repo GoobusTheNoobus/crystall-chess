@@ -88,8 +88,7 @@ namespace Crystall::Search {
         }
 
         if (info.nodes_searched % 100000 == 0) {
-            History::normalize();
-            Butterfly::normalize();
+            History::clear();
         }
 
         ++info.plies_from_root;
@@ -159,8 +158,6 @@ namespace Crystall::Search {
             if (!is_legal) continue;
 
             ++legal_moves;
-
-            Butterfly::add(opposite(pos.get_side_to_move()), move.from(), move.dest());
 
             int score;
             if (legal_moves == 1) {
