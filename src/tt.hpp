@@ -1,7 +1,7 @@
 #pragma once
 
-#include "chess/types.hpp"
-#include "chess/move/move.hpp"
+#include "types.hpp"
+#include "move.hpp"
 #include <iostream>
 
 namespace Crystall {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "chess/types.hpp"
-#include "chess/board/position.hpp"
-#include "engine/timer.hpp"
+#include "types.hpp"
+#include "position.hpp"
+#include "timer.hpp"
 
 namespace Crystall::Search {
     constexpr int MaxSearchDepth = 32;
@@ -19,7 +19,7 @@ namespace Crystall::Search {
         int score = 0;
     };
 
-    void run_iterative_deepening(Position pos, int depth, int movetime);
+    void start(Position pos, int depth, int movetime);
     inline void stop() { Timer::request_stop(); }
 
     template <bool is_pv>

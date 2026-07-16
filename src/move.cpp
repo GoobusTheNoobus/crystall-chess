@@ -1,4 +1,4 @@
-#include "chess/move/move.hpp"
+#include "move.hpp"
 
 namespace Crystall {
 

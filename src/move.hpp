@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chess/types.hpp"
+#include "types.hpp"
 
 namespace Crystall {
 

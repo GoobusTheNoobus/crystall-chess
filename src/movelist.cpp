@@ -1,6 +1,6 @@
-#include "chess/move/movelist.hpp"
-#include "engine/search/search.hpp"
-#include "engine/search/history.hpp"
+#include "movelist.hpp"
+#include "search.hpp"
+#include "history.hpp"
 
 namespace Crystall {
 
@@ -35,7 +35,7 @@ namespace Crystall {
                 return promo_score;
             }
 
-            int history_score = Search::History::table[pos.get_side_to_move()][from][dest] / std::max(Search::Butterfly::table[pos.get_side_to_move()][from][dest], 1);
+            int history_score = Search::History::table[pos.get_side_to_move()][from][dest];
             return history_score;
         }
     }

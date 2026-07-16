@@ -1,5 +1,5 @@
-#include "chess/movegen/attacks.hpp"
-#include "chess/bitboards/bitboards.hpp"
+#include "attacks.hpp"
+#include "bitboards.hpp"
 
 namespace Crystall::Attack {
 

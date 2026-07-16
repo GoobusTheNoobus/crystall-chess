@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "engine/eval/eval.hpp"
-#include "chess/board/zobrist.hpp"
-#include "chess/bitboards/bitboards.hpp"
-#include "protocol/uci.hpp"
-#include "engine/search/search.hpp"
+#include "eval.hpp"
+#include "zobrist.hpp"
+#include "bitboards.hpp"
+#include "uci.hpp"
+#include "search.hpp"
 
 using namespace Crystall;
 

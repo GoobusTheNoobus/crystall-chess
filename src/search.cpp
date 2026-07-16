@@ -1,9 +1,9 @@
-#include "engine/search/search.hpp"
-#include "protocol/uci.hpp"
-#include "chess/move/movelist.hpp"
-#include "engine/tt/tt.hpp"
-#include "engine/timer.hpp"
-#include "engine/search/history.hpp"
+#include "search.hpp"
+#include "uci.hpp"
+#include "movelist.hpp"
+#include "tt.hpp"
+#include "timer.hpp"
+#include "history.hpp"
 
 #include <chrono>
 #include <atomic>
@@ -14,7 +14,7 @@ namespace Crystall::Search {
 
     namespace {
 
-        int reduction_table[2][256][MaxSearchDepth];
+        int reduction_table[256][MaxSearchDepth];
 
         constexpr int AspirationWindow = 130;
         constexpr int MaxQSearchDepth = 15;
@@ -25,10 +25,97 @@ namespace Crystall::Search {
     void init() {
         for (int m = 1; m < 256; ++m) {
             for (int d = 1; d < MaxSearchDepth; ++d) {
-                reduction_table[false][m][d] = 0.18 * std::log(m) * std::log(d) + 0.48;
-                reduction_table[true][m][d]  = 0.12 * std::log(m) * std::log(d) + 0.42;
+                reduction_table[m][d] = (int)(0.5 * std::log(m) * std::log(d) + 0.4);
             }
         }
+    }
+
+    constexpr int AspirationExpansion = 2;
+
+    void start(Position pos, int max_depth, int movetime) {
+
+        TranspositionTable::clear();
+        Timer::start(movetime);
+
+        Move best_move;
+        int score = 0;
+
+        SearchInfo info;
+        for (int depth = 1; depth <= max_depth; ++depth) {
+
+            bool log_currmove = Timer::elapsed() > 500;
+
+            info.seldepth = 0;
+            info.previous_nodes_searched = info.nodes_searched;
+
+            int delta = AspirationWindow;
+
+            int alpha = score - delta;
+            int beta = score + delta;
+
+            RootSearchResult result;
+
+            if (depth == 1) {
+                result = search_root(info, pos, depth, alpha, beta, best_move, false);
+            }
+            else {
+                while (true) {
+                    result = search_root(info, pos, depth, alpha, beta, best_move, log_currmove);
+
+                    if (Timer::should_stop_search()) break;
+
+                    if (result.score <= alpha) {
+                        alpha -= delta;
+                        delta *= AspirationExpansion;
+                        continue;
+                    }
+
+                    if (result.score >= beta) {
+                        beta += delta;
+                        delta *= AspirationExpansion;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+            
+            if (Timer::should_stop_search()) break;
+
+            best_move = result.move;
+            score = result.score;
+
+            Position copy = pos;
+            std::vector<Move> pv;
+
+            if (best_move.is_valid() && copy.attempt_move(best_move)) {
+                pv.push_back(best_move);
+            }
+            
+            for (int i = 0; i < depth; ++i) {
+                auto entry = TranspositionTable::read(copy.get_key());
+                if (entry.depth > 0 && entry.flag == TranspositionTable::Exact) {
+                    Move move = entry.best_move;
+
+                    if (!copy.attempt_move(move)) break;
+
+                    pv.push_back(move);
+                }
+            }
+
+            UCI::info_depth(
+                depth, 
+                info.seldepth, 
+                result.score, 
+                info.nodes_searched - info.previous_nodes_searched, 
+                Timer::elapsed(), 
+                info.nodes_searched, 
+                pv
+            );
+        }
+
+        std::cout << "bestmove " << best_move.to_string() << std::endl;
+
     }
 
     RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& root_pv, bool log_currmove) {
@@ -87,9 +174,6 @@ namespace Crystall::Search {
             return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), alpha, beta);
         }
 
-        if (info.nodes_searched % 100000 == 0) {
-            History::clear();
-        }
 
         ++info.plies_from_root;
         info.seldepth = std::max(info.seldepth, info.plies_from_root);
@@ -154,26 +238,40 @@ namespace Crystall::Search {
             Move move = moves[i];
             ++i;
 
+            bool noisy = is_noisy(pos, move);
+
             bool is_legal = pos.attempt_move(move);
             if (!is_legal) continue;
 
             ++legal_moves;
 
+
             int score;
-            if (legal_moves == 1) {
+            if (!is_pv || legal_moves > 1) {
+                score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
+            }
+
+            if (is_pv && (legal_moves == 1 || score > alpha)) {
+                score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
+            }
+
+            /*if (legal_moves == 1) {
                 score = -search_node<is_pv>(info, pos, depth - 1, -beta, -alpha, false);
             } 
             else {
-
                 score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
 
-                if (score > alpha && score < beta)
-                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
-            }
+                if (score > alpha && score < beta && is_pv) {
+                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
+                }
+                
+            }*/
 
             pos.undo_move();
 
-            alpha = std::max(score, alpha);
+            if (score >= alpha) {
+                alpha = score;
+            }
             
             if (score > best_score) {
                 best_score = score;
@@ -181,8 +279,15 @@ namespace Crystall::Search {
             }
 
             if (alpha >= beta) {
-                if (!is_noisy(pos, move)) {
-                    History::table[pos.get_side_to_move()][move.from()][move.dest()] += depth * depth;
+                if (!noisy) {
+                    History::update(pos.get_side_to_move(), move.from(), move.dest(), std::min(300 * depth - 300, 2500));
+
+                    // Loop all previously searched moves to penalise
+                    for (int j = 1; j < i; ++j) {
+                        Move m = moves[j];
+                        if (!is_noisy(pos, m))
+                            History::update(pos.get_side_to_move(), m.from(), m.dest(), -std::min(300 * depth - 300, 2500));
+                    }
                 }
                 break;
             }

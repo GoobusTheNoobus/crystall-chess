@@ -1,8 +1,8 @@
 #pragma once
 
-#include "chess/move/move.hpp"
-#include "chess/board/position.hpp"
-#include "chess/movegen/movegen.hpp"
+#include "move.hpp"
+#include "position.hpp"
+#include "movegen.hpp"
 
 namespace Crystall {
     

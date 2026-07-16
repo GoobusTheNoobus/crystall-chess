@@ -1,6 +1,6 @@
-#include "engine/search/search.hpp"
-#include "engine/timer.hpp"
-#include "chess/move/movelist.hpp"
+#include "search.hpp"
+#include "timer.hpp"
+#include "movelist.hpp"
 
 namespace Crystall::Search {
 

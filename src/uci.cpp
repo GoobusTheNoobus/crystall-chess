@@ -1,8 +1,7 @@
-#include "protocol/uci.hpp"
-#include "chess/board/position.hpp"
-#include "engine/engine.hpp"
-#include "engine/search/search.hpp"
-#include "engine/search/history.hpp"
+#include "uci.hpp"
+#include "position.hpp"
+#include "search.hpp"
+#include "history.hpp"
 
 #include <thread>
 #include <sstream>
@@ -36,7 +35,7 @@ namespace Crystall::UCI {
     std::thread search_thread;
 
     void stop() {
-        Engine::stop();
+        Search::stop();
 
         if (search_thread.joinable()) {
             search_thread.join();
@@ -99,7 +98,7 @@ namespace Crystall::UCI {
         if (depth < 1 || depth > Search::MaxSearchDepth) depth = Search::MaxSearchDepth;
         
         search_thread = std::thread([depth, time_limit]() {
-            Engine::start(position, depth, time_limit);
+            Search::start(position, depth, time_limit);
         });
     }
 

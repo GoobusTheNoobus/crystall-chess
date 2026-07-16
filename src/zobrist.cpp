@@ -1,4 +1,4 @@
-#include "chess/board/zobrist.hpp"
+#include "zobrist.hpp"
 #include <random>
 
 void Crystall::Zobrist::init() {

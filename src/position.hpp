@@ -1,8 +1,8 @@
 #pragma once
 
-#include "chess/types.hpp"
-#include "chess/move/move.hpp"
-#include "engine/eval/eval.hpp"
+#include "types.hpp"
+#include "move.hpp"
+#include "eval.hpp"
 
 #include <string>
 #include <iostream>
@@ -66,7 +66,6 @@ namespace Crystall {
         bool is_in_check(Color) const;
         bool is_in_check() const;
 
-        int generate_pseudo_legal_moves(Move[]) const;
         void make_move(const Move&);
         void make_move(const std::string&);
         bool attempt_move(const Move&);

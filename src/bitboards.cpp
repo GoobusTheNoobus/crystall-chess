@@ -1,4 +1,4 @@
-#include "chess/bitboards/bitboards.hpp"
+#include "bitboards.hpp"
 
 namespace Crystall {
 
@@ -208,7 +208,6 @@ namespace Crystall {
         constexpr Direction RookDirections[4]   = {{1, 0}, {-1, 0}, { 0, 1}, { 0, -1}};
 
         bool out_of_bounds(int x, int y) { return unsigned(x) >= 8 || unsigned(y) >= 8; }
-
 
         u64 generate_blocker_from_index(int index, u64 mask) {
             u64 blocker = 0;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chess/bitboards/bitboards.hpp"
+#include "bitboards.hpp"
 
 namespace Crystall {
 

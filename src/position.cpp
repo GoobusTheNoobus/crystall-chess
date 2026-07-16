@@ -1,8 +1,8 @@
-#include "chess/board/position.hpp"
-#include "chess/bitboards/bitboards.hpp"
-#include "chess/movegen/attacks.hpp"
-#include "chess/board/zobrist.hpp"
-#include "chess/move/movelist.hpp"
+#include "position.hpp"
+#include "bitboards.hpp"
+#include "attacks.hpp"
+#include "zobrist.hpp"
+#include "movelist.hpp"
 
 #include <sstream>
 #include <charconv>
