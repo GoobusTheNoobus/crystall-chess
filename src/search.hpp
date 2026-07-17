@@ -1,3 +1,6 @@
+// Crystall is a hobby UCI chess engine written in C++
+// Developed by GoobusTheNoobus
+
 #pragma once
 
 #include "types.hpp"
@@ -9,7 +12,6 @@ namespace Crystall::Search {
 
     struct SearchInfo {
         u64 nodes_searched = 0;
-        u64 previous_nodes_searched = 0;
         int plies_from_root = 0;
         int seldepth = 0;
     };

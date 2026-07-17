@@ -1,3 +1,6 @@
+// Crystall is a hobby UCI chess engine written in C++
+// Developed by GoobusTheNoobus
+
 #include "position.hpp"
 #include "bitboards.hpp"
 #include "attacks.hpp"

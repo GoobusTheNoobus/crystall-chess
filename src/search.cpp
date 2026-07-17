@@ -1,3 +1,6 @@
+// Crystall is a hobby UCI chess engine written in C++
+// Developed by GoobusTheNoobus
+
 #include "search.hpp"
 #include "uci.hpp"
 #include "movelist.hpp"
@@ -46,7 +49,6 @@ namespace Crystall::Search {
             bool log_currmove = Timer::elapsed() > 500;
 
             info.seldepth = 0;
-            info.previous_nodes_searched = info.nodes_searched;
 
             int delta = AspirationWindow;
 
@@ -103,19 +105,10 @@ namespace Crystall::Search {
                 }
             }
 
-            UCI::info_depth(
-                depth, 
-                info.seldepth, 
-                result.score, 
-                info.nodes_searched - info.previous_nodes_searched, 
-                Timer::elapsed(), 
-                info.nodes_searched, 
-                pv
-            );
+            UCI::info_depth(depth, info.seldepth, result.score, Timer::elapsed(), info.nodes_searched, pv);
         }
 
         std::cout << "bestmove " << best_move.to_string() << std::endl;
-
     }
 
     RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& root_pv, bool log_currmove) {
@@ -141,11 +134,12 @@ namespace Crystall::Search {
             }
 
             int score;
-            if (legal_moves == 1) {
-                score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
+            if (legal_moves > 1) {
+                score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
             }
-            else {
-                score = -search_node<false>(info, pos, depth - 1, -beta, -alpha);
+
+            if (legal_moves == 1 || score > alpha) {
+                score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
             }
                 
             pos.undo_move();
@@ -173,7 +167,6 @@ namespace Crystall::Search {
             int qsearch_depth = info.plies_from_root * 2 + 2;
             return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), alpha, beta);
         }
-
 
         ++info.plies_from_root;
         info.seldepth = std::max(info.seldepth, info.plies_from_root);
@@ -255,18 +248,6 @@ namespace Crystall::Search {
                 score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
             }
 
-            /*if (legal_moves == 1) {
-                score = -search_node<is_pv>(info, pos, depth - 1, -beta, -alpha, false);
-            } 
-            else {
-                score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
-
-                if (score > alpha && score < beta && is_pv) {
-                    score = -search_node<true>(info, pos, depth - 1, -beta, -alpha, false);
-                }
-                
-            }*/
-
             pos.undo_move();
 
             if (score >= alpha) {
@@ -283,12 +264,13 @@ namespace Crystall::Search {
                     History::update(pos.get_side_to_move(), move.from(), move.dest(), std::min(300 * depth - 300, 2500));
 
                     // Loop all previously searched moves to penalise
-                    for (int j = 1; j < i; ++j) {
+                    for (int j = 0; j < i; ++j) {
                         Move m = moves[j];
                         if (!is_noisy(pos, m))
                             History::update(pos.get_side_to_move(), m.from(), m.dest(), -std::min(300 * depth - 300, 2500));
                     }
                 }
+
                 break;
             }
         }

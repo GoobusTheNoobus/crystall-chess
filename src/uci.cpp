@@ -1,3 +1,6 @@
+// Crystall is a hobby UCI chess engine written in C++
+// Developed by GoobusTheNoobus
+
 #include "uci.hpp"
 #include "position.hpp"
 #include "search.hpp"
@@ -8,11 +11,11 @@
 
 namespace Crystall::UCI {
 
-    void info_depth(int depth, int seldepth, int score, u64 nodes_this_iter, u64 elapsed, u64 total_nodes, const std::vector<Move>& pv) {
+    void info_depth(int depth, int seldepth, int score, u64 elapsed, u64 total_nodes, const std::vector<Move>& pv) {
         std::cout << "info depth " << depth <<
                         " seldepth " << seldepth <<
                         " score " << score_string(score) << 
-                        " nodes " << nodes_this_iter << 
+                        " nodes " << total_nodes << 
                         " nps " << total_nodes * 1000 / std::max<u64>(1ULL, elapsed) << 
                         " hashfull " << TranspositionTable::hashfull() <<
                         " time " << std::max<u64>(1ULL, elapsed) <<
