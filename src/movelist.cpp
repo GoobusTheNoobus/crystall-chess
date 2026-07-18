@@ -21,12 +21,12 @@ namespace Crystall {
         constexpr int PromotionScoreTable[4] = { 790000, 750000, 732000, 731000 };
         
         constexpr int MaxMoveScore = 1000000;
-        int score_move(const Position& pos, const Move& move, const Move& special_move) {
+        int score_move(const Position& pos, const u16& move, const u16& special_move) {
             if (move == special_move) return MaxMoveScore;
             
-            Square from = move.from();
-            Square dest = move.dest();
-            Move::Type flag = move.flag();
+            Square from = Move::from(move);
+            Square dest = Move::dest(move);
+            Move::Type flag = Move::type(move);
 
             if (pos.get_piece_on(dest) != NoPiece) {
                 int mvvlva_score = MVVLVATable[type_of(pos.get_piece_on(from))][type_of(pos.get_piece_on(dest))];
@@ -43,7 +43,7 @@ namespace Crystall {
         }
     }
 
-    void MoveList::calculate_scores(const Move& special_move) {
+    void MoveList::calculate_scores(const u16 special_move) {
         for (int i = 0; i < size_; ++i) {
             scores[i] = score_move(pos, moves[i], special_move);
         }

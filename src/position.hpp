@@ -23,9 +23,9 @@ namespace Crystall {
 
     struct MoveUndoInfo {
         u64 key;
-        Move move;
         int castling_rights;
         int rule50_clock;
+        u16 move;
         Square en_passant_square;
         Piece captured_piece;
     };
@@ -69,9 +69,9 @@ namespace Crystall {
         bool is_in_check(Color) const;
         bool is_in_check() const;
 
-        void make_move(const Move&);
+        void make_move(const u16 move);
         void make_move(const std::string&);
-        bool attempt_move(const Move&);
+        bool attempt_move(const u16 move);
         void undo_move();
 
         bool has_non_pawn_material() const;
@@ -85,7 +85,7 @@ namespace Crystall {
         void clear_square(Square square);
         void place_piece(Square square, Piece piece);
 
-        void push_move_stacks(u64 key, Move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece);
+        void push_move_stacks(u64 key, u16 move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece);
         MoveUndoInfo& pop_undo_info();
 
     };

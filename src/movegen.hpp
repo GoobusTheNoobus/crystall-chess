@@ -7,5 +7,5 @@
 #include "position.hpp"
 
 namespace Crystall::MoveGen {
-    int generate_pseudo_legal_moves(const Position& pos, Move moves[]);
+    int generate_pseudo_legal_moves(const Position& pos, u16 moves[]);
 }

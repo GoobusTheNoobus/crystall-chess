@@ -210,21 +210,21 @@ namespace Crystall {
         return is_in_check(side_to_move);
     }
 
-    void Position::push_move_stacks(u64 key, Move move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
-        move_undo_stack[ply++] = { key, move, castling_rights, rule50_clock, en_passant_square, captured_piece };
+    void Position::push_move_stacks(u64 key, u16 move, int castling_rights, int rule50_clock, Square en_passant_square, Piece captured_piece) {
+        move_undo_stack[ply++] = { key, castling_rights, rule50_clock, move, en_passant_square, captured_piece };
     }
 
     MoveUndoInfo& Position::pop_undo_info() {
         return move_undo_stack[--ply];
     }
 
-    void Position::make_move(const Move& move) {
+    void Position::make_move(const u16 move) {
         Color us = side_to_move;
         bool is_white = us == White;
 
-        Square from = move.from();
-        Square dest = move.dest();
-        Move::Type flag = move.flag();
+        Square from = Move::from(move);
+        Square dest = Move::dest(move);
+        Move::Type flag = Move::type(move);
 
         Piece moving_piece = NoPiece;
         PieceType moving_pt = Pawn;
@@ -329,14 +329,14 @@ namespace Crystall {
         MoveList list(*this);
 
         for (int i = 0; i < list.size(); ++i) {
-            if (list[i].to_string() == move_str) {
+            if (Move::to_string(list[i]) == move_str) {
                 make_move(list[i]);
                 return;
             }
         }
     }
 
-    bool Position::attempt_move(const Move& move) {
+    bool Position::attempt_move(const u16 move) {
         Color us = side_to_move;
 
         make_move(move);
@@ -357,16 +357,16 @@ namespace Crystall {
 
         MoveUndoInfo& info = pop_undo_info();
 
-        Move move = info.move;
+        u16 move = info.move;
         state.castling_rights = info.castling_rights;
         state.en_passant_square = info.en_passant_square;
         state.rule50_clock = info.rule50_clock;
 
         Piece captured_piece = info.captured_piece;
 
-        Square from = move.from();
-        Square dest = move.dest();
-        Move::Type flag = move.flag();
+        Square from = Move::from(move);
+        Square dest = Move::dest(move);
+        Move::Type flag = Move::type(move);
 
         if (move == Move::NullMove) {
             hash = info.key;

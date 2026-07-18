@@ -14,12 +14,12 @@ namespace Crystall {
         return entry.key == key ? entry : NullEntry;
     }
 
-    void TranspositionTable::write(u64 key, Move& best_move, int score, uint8_t depth, EntryType flag) {
+    void TranspositionTable::write(u64 key, u16 best_move, int score, u8 depth, EntryType flag) {
         int index = get_index(key);
         Entry& entry = data[index];
 
         if (entry.key != key || entry.depth < depth) {
-            data[index] = {key, best_move, score, depth, flag};
+            data[index] = {key, score, best_move, depth, flag};
         }
     }
 

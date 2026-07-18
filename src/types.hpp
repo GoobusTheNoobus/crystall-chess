@@ -10,9 +10,18 @@
 namespace Crystall {
 
     using u64 = uint64_t;
+    using u32 = uint32_t;
+    using u16 = uint16_t;
+    using u8  = uint8_t;
+    using i64 = int64_t;
+    using i32 = int32_t;
+    using i16 = int16_t;
+    using i8  = int8_t;
+
+    using usize = size_t;
 
     constexpr int FileNB = 8, RankNB = 8, SquareNB = FileNB * RankNB;
-    enum Square : uint8_t {
+    enum Square : u8 {
         A1, B1, C1, D1, E1, F1, G1, H1,
         A2, B2, C2, D2, E2, F2, G2, H2,
         A3, B3, C3, D3, E3, F3, G3, H3,
@@ -26,9 +35,9 @@ namespace Crystall {
     };
 
     constexpr int ColorNB = 2, PieceTypeNB = 6, PieceNB = ColorNB * PieceTypeNB;
-    enum Color : uint8_t { White, Black };
-    enum PieceType : uint8_t { Pawn, Knight, Bishop, Rook, Queen, King };
-    enum Piece : uint8_t {
+    enum Color : u8 { White, Black };
+    enum PieceType : u8 { Pawn, Knight, Bishop, Rook, Queen, King };
+    enum Piece : u8 {
         WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing,
         BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing,
         NoPiece
@@ -43,7 +52,7 @@ namespace Crystall {
     inline int file_of(Square s) { return s % 8; }
     inline int rank_of(Square s) { return s / 8; }
 
-    inline Square make_square(std::string str) {
+    inline Square make_square(const std::string& str) {
 
         char rc = str[1];
         char fc = str[0];
@@ -72,15 +81,4 @@ namespace Crystall {
                   NegativeInfinity = -11001,
                   Timeout = 11002,
                   KnownWin = 6000;
-
-    inline std::string score_string(int score) {
-        if (std::abs(score) <= MaxCentipawn) return "cp " + std::to_string(score);
-
-        int mate_dist = MateScore - std::abs(score);
-        
-        mate_dist = score > 0 ? mate_dist : -mate_dist;
-        mate_dist = (int)std::ceil(mate_dist / 2.0);
-
-        return "mate " + std::to_string(mate_dist);
-    }
 }

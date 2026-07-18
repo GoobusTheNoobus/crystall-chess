@@ -9,29 +9,29 @@
 
 namespace Crystall::MoveGen {
     namespace {
-        void add(int& i, Move* arr, Move m) {
+        void add(int& i, u16* arr, u16 m) {
             arr[i++] = m;
         }
 
-        void extract_pawn(int& i, Move* arr, u64 bb, int offset, Move::Type type) {
+        void extract_pawn(int& i, u16* arr, u64 bb, int offset, Move::Type type) {
             while (bb) {
                 int lsb = poplsb(bb);
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), type));
+                add(i, arr, Move::create(Square(lsb - offset), Square(lsb), type));
             }
         }
 
-        void extract_pawn_promo(int& i, Move* arr, u64 bb, int offset) {
+        void extract_pawn_promo(int& i, u16* arr, u64 bb, int offset) {
             while (bb) {
                 int lsb = poplsb(bb);
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoQ));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoR));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoB));
-                add(i, arr, Move(Square(lsb - offset), Square(lsb), Move::PromoN));
+                add(i, arr, Move::create(Square(lsb - offset), Square(lsb), Move::PromoQ));
+                add(i, arr, Move::create(Square(lsb - offset), Square(lsb), Move::PromoR));
+                add(i, arr, Move::create(Square(lsb - offset), Square(lsb), Move::PromoB));
+                add(i, arr, Move::create(Square(lsb - offset), Square(lsb), Move::PromoN));
             }
         }
     }
 
-    int generate_pseudo_legal_moves(const Position& pos, Move moves[]) {
+    int generate_pseudo_legal_moves(const Position& pos, u16 moves[]) {
         int size = 0;
         Color us = pos.get_side_to_move();
         Color them = opposite(us);
@@ -75,7 +75,7 @@ namespace Crystall::MoveGen {
             u64 ep_pawns = pawns & Bitboards::pawn_attacks(ep, opposite(us));
             while (ep_pawns) {
                 int lsb = poplsb(ep_pawns);
-                add(size, moves, Move(Square(lsb), ep, Move::EnPassant));
+                add(size, moves, Move::create(Square(lsb), ep, Move::EnPassant));
             }
         }
 
@@ -85,7 +85,7 @@ namespace Crystall::MoveGen {
             u64 attacks = Bitboards::knight_attacks(from) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, moves, Move(from, to, Move::Normal));
+                add(size, moves, Move::create(from, to, Move::Normal));
             }
         }
 
@@ -95,7 +95,7 @@ namespace Crystall::MoveGen {
             u64 attacks = Bitboards::bishop_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, moves, Move(from, to, Move::Normal));
+                add(size, moves, Move::create(from, to, Move::Normal));
             }
         }
 
@@ -105,7 +105,7 @@ namespace Crystall::MoveGen {
             u64 attacks = Bitboards::rook_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, moves, Move(from, to, Move::Normal));
+                add(size, moves, Move::create(from, to, Move::Normal));
             }
         }
 
@@ -115,7 +115,7 @@ namespace Crystall::MoveGen {
             u64 attacks = Bitboards::queen_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, moves, Move(from, to, Move::Normal));
+                add(size, moves, Move::create(from, to, Move::Normal));
             }
         }
 
@@ -125,7 +125,7 @@ namespace Crystall::MoveGen {
             u64 attacks = Bitboards::king_attacks(from) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
-                add(size, moves, Move(from, to, Move::Normal));
+                add(size, moves, Move::create(from, to, Move::Normal));
             }
         }
 
@@ -136,17 +136,17 @@ namespace Crystall::MoveGen {
 
         if (is_white && !pos.is_attacked(E1, them)) {
             if (pos.has_castling_right(CastlingWK) && !(occ & WKCastleEmpty) && !pos.is_attacked(F1, them) && !pos.is_attacked(G1, them)) {
-                add(size, moves, Move(E1, G1, Move::Castling));
+                add(size, moves, Move::create(E1, G1, Move::Castling));
             }
             if (pos.has_castling_right(CastlingWQ) && !(occ & WQCastleEmpty) && !pos.is_attacked(D1, them) && !pos.is_attacked(C1, them)) {
-                add(size, moves, Move(E1, C1, Move::Castling));
+                add(size, moves, Move::create(E1, C1, Move::Castling));
             }
         } else if (!is_white && !pos.is_attacked(E8, them)) {
             if (pos.has_castling_right(CastlingBK) && !(occ & BKCastleEmpty) && !pos.is_attacked(F8, them) && !pos.is_attacked(G8, them)) {
-                add(size, moves, Move(E8, G8, Move::Castling));
+                add(size, moves, Move::create(E8, G8, Move::Castling));
             }
             if (pos.has_castling_right(CastlingBQ) && !(occ & BQCastleEmpty) && !pos.is_attacked(D8, them) && !pos.is_attacked(C8, them)) {
-                add(size, moves, Move(E8, C8, Move::Castling));
+                add(size, moves, Move::create(E8, C8, Move::Castling));
             }
         }
 

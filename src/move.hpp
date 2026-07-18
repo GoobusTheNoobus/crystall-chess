@@ -7,9 +7,9 @@
 
 namespace Crystall {
 
-    struct Move {
+    namespace Move {
 
-        enum Type {
+        enum Type : u8 {
             Normal,
             DoublePawnPush, 
             Castling,
@@ -21,30 +21,26 @@ namespace Crystall {
             None
         };
 
-        private:
-        Square from_;
-        Square dest_;
-        Type flag_;
+        inline u16 create(Square from, Square dest, Type type) {
+            return from | (dest << 6) | (type << 12);
+        }
 
-        public:
+        inline Square from(const u16 move) { return Square(move & 0x3F); }
+        inline Square dest(const u16 move) { return Square((move >> 6) & 0x3F); }
+        inline Type type(const u16 move) { return Type(move >> 12); }
 
-        inline Square from() const { return from_; }
-        inline Square dest() const { return dest_; }
-        inline Type flag() const { return flag_; }
+        constexpr char PromoCharacters[] = {'q', 'r', 'b', 'n'};
 
-        inline Move(Square from, Square dest, Type flag) : from_(from), dest_(dest), flag_(flag) {}
-        inline constexpr Move() : from_(NoSquare), dest_(NoSquare), flag_(None) {}
+        inline std::string to_string(const u16 move) {
+            std::string move_str = square_to_string(from(move)) + square_to_string(dest(move));
 
-        bool is_valid() const;
-        bool operator==(const Move&) const;
-        std::string to_string() const;
+            if (type(move) >= PromoQ) {
+                return move_str + PromoCharacters[type(move) - PromoQ];
+            }
 
-        static const Move NullMove;
+            return move_str;
+        }
 
+        constexpr u16 NullMove = 0;
     };
-
-    inline std::ostream& operator<<(std::ostream& os, const Move& move) {
-        os << move.to_string();
-        return os;
-    }
 }

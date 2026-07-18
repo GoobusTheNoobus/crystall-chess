@@ -11,7 +11,20 @@
 
 namespace Crystall::UCI {
 
-    void info_depth(int depth, int seldepth, int score, u64 elapsed, u64 total_nodes, const std::vector<Move>& pv) {
+    namespace {
+        std::string score_string(int score) {
+            if (std::abs(score) <= MaxCentipawn) return "cp " + std::to_string(score);
+
+            int mate_dist = MateScore - std::abs(score);
+            
+            mate_dist = score > 0 ? mate_dist : -mate_dist;
+            mate_dist = (int)std::ceil(mate_dist / 2.0);
+
+            return "mate " + std::to_string(mate_dist);
+        }
+    }
+
+    void info_depth(int depth, int seldepth, int score, u64 elapsed, u64 total_nodes, const std::vector<u16>& pv) {
         std::cout << "info depth " << depth <<
                         " seldepth " << seldepth <<
                         " score " << score_string(score) << 
@@ -21,14 +34,14 @@ namespace Crystall::UCI {
                         " time " << std::max<u64>(1ULL, elapsed) <<
                         " pv ";
         
-        for (const Move& m: pv) 
-            std::cout << m.to_string() << ' ';
+        for (const u16 m: pv) 
+            std::cout << Move::to_string(m) << ' ';
         
         std::cout << std::endl;
     }
 
-    void info_depth(int depth, u64 elasped, const Move& currmove, int currmovenumber) {
-        std::cout << "info depth " << depth << " time " << elasped << " currmove " << currmove.to_string() << " currmovenumber " << currmovenumber << std::endl;
+    void info_depth(int depth, u64 elapsed, u64 total_nodes, const u16 currmove, int currmovenumber) {
+        std::cout << "info depth " << depth << " time " << elapsed << " nodes " << total_nodes << " nps " << total_nodes * 1000 / std::max<u64>(1ULL, elapsed) << " currmove " << Move::to_string(currmove) << " currmovenumber " << currmovenumber << std::endl;
     }
     void info_string(const std::string& msg) { std::cout << "info string " << msg << std::endl; }
 

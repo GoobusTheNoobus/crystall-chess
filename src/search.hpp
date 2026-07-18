@@ -17,8 +17,8 @@ namespace Crystall::Search {
     };
 
     struct RootSearchResult {
-        Move move;
         int score = 0;
+        u16 move;
     };
 
     void start(Position pos, int depth, int movetime);
@@ -27,10 +27,10 @@ namespace Crystall::Search {
     template <bool is_pv>
     int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
     int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const Move& move, bool log_currmove);
+    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const u16 move, bool log_currmove);
 
-    inline bool is_noisy(const Position& pos, const Move& move) {
-        return move.flag() >= Move::EnPassant || pos.get_piece_on(move.dest()) != NoPiece;
+    inline bool is_noisy(const Position& pos, const u16 move) {
+        return Move::type(move) >= Move::EnPassant || pos.get_piece_on(Move::dest(move)) != NoPiece;
     }
 
     void init();

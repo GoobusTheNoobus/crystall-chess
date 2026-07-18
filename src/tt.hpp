@@ -11,7 +11,7 @@ namespace Crystall {
 
     namespace TranspositionTable {
 
-        enum EntryType : uint8_t {
+        enum EntryType : u8 {
             Exact,
             Lower,
             Upper
@@ -19,9 +19,9 @@ namespace Crystall {
 
         struct Entry {
             u64 key = 0;
-            Move best_move;
             int score = 0;
-            uint8_t depth = 0;
+            u16 best_move;
+            u8 depth = 0;
             EntryType flag = Exact;
 
         };
@@ -29,18 +29,18 @@ namespace Crystall {
         namespace {
             inline constexpr static int TableMB = 108;
             inline constexpr static int EntriesNB = (TableMB * 1024 * 1024) / sizeof(Entry);
-            
+
             inline static Entry data[EntriesNB];
 
             static inline int get_index(u64 key) { return key % EntriesNB; }
         }
 
-        void write(u64 key, Move& best_move, int score, uint8_t depth, EntryType flag);
+        void write(u64 key, u16 best_move, int score, u8 depth, EntryType flag);
         const Entry& read(u64 key);
         void clear();
 
         int hashfull();
-        
-        const static Entry NullEntry = {0, Move::NullMove, 0, 0, Exact};
+
+        const static Entry NullEntry = {0, 0, Move::NullMove, 0, Exact};
     };
 }

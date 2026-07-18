@@ -12,7 +12,7 @@ namespace Crystall {
     class MoveList {
         private:
 
-        Move moves[256];
+        u16 moves[256];
         int scores[256];
         int size_ = 0;
         const Position& pos;
@@ -20,11 +20,11 @@ namespace Crystall {
         public:
         inline MoveList(const Position& pos) : size_(MoveGen::generate_pseudo_legal_moves(pos, moves)), pos(pos) {}
 
-        inline Move operator[](int i) { return moves[i]; }
-        inline const Move operator[](int i) const { return moves[i]; }
+        inline u16 operator[](int i) { return moves[i]; }
+        inline const u16 operator[](int i) const { return moves[i]; }
         inline int size() { return size_; }
 
-        void calculate_scores(const Move& special_move);
+        void calculate_scores(const u16 special_move);
         void calculate_scores();
         inline bool next(int i) {
             if (i >= size_) return false;
