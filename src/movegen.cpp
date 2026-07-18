@@ -72,7 +72,7 @@ namespace Crystall::MoveGen {
 
         Square ep = pos.get_en_passant();
         if (ep != NoSquare) {
-            u64 ep_pawns = pawns & Bitboards::pawn_attacks(ep, opposite(us));
+            u64 ep_pawns = pawns & Attacks::pawn_attacks(ep, opposite(us));
             while (ep_pawns) {
                 int lsb = poplsb(ep_pawns);
                 add(size, moves, Move::create(Square(lsb), ep, Move::EnPassant));
@@ -82,7 +82,7 @@ namespace Crystall::MoveGen {
         u64 knights = pos.get_bitboard(Knight, us);
         while (knights) {
             Square from = Square(poplsb(knights));
-            u64 attacks = Bitboards::knight_attacks(from) & ~pos.get_bitboard(us);
+            u64 attacks = Attacks::knight_attacks(from) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
                 add(size, moves, Move::create(from, to, Move::Normal));
@@ -92,7 +92,7 @@ namespace Crystall::MoveGen {
         u64 bishops = pos.get_bitboard(Bishop, us);
         while (bishops) {
             Square from = Square(poplsb(bishops));
-            u64 attacks = Bitboards::bishop_attack(from, occ) & ~pos.get_bitboard(us);
+            u64 attacks = Attacks::bishop_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
                 add(size, moves, Move::create(from, to, Move::Normal));
@@ -102,7 +102,7 @@ namespace Crystall::MoveGen {
         u64 rooks = pos.get_bitboard(Rook, us);
         while (rooks) {
             Square from = Square(poplsb(rooks));
-            u64 attacks = Bitboards::rook_attack(from, occ) & ~pos.get_bitboard(us);
+            u64 attacks = Attacks::rook_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
                 add(size, moves, Move::create(from, to, Move::Normal));
@@ -112,7 +112,7 @@ namespace Crystall::MoveGen {
         u64 queens = pos.get_bitboard(Queen, us);
         while (queens) {
             Square from = Square(poplsb(queens));
-            u64 attacks = Bitboards::queen_attack(from, occ) & ~pos.get_bitboard(us);
+            u64 attacks = Attacks::queen_attack(from, occ) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
                 add(size, moves, Move::create(from, to, Move::Normal));
@@ -122,7 +122,7 @@ namespace Crystall::MoveGen {
         u64 king = pos.get_bitboard(King, us);
         if (king) {
             Square from = Square(poplsb(king));
-            u64 attacks = Bitboards::king_attacks(from) & ~pos.get_bitboard(us);
+            u64 attacks = Attacks::king_attacks(from) & ~pos.get_bitboard(us);
             while (attacks) {
                 Square to = Square(poplsb(attacks));
                 add(size, moves, Move::create(from, to, Move::Normal));

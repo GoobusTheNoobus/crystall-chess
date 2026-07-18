@@ -37,15 +37,6 @@ namespace Crystall {
             1ULL << 48, 1ULL << 49, 1ULL << 50, 1ULL << 51, 1ULL << 52, 1ULL << 53, 1ULL << 54, 1ULL << 55, 
             1ULL << 56, 1ULL << 57, 1ULL << 58, 1ULL << 59, 1ULL << 60, 1ULL << 61, 1ULL << 62, 1ULL << 63,
         };
-
-        u64 knight_attacks(Square);
-        u64 king_attacks(Square);
-        u64 pawn_attacks(Square, Color);
-        u64 bishop_attack(Square, u64 occ);
-        u64 rook_attack(Square, u64 occ); 
-        u64 queen_attack(Square, u64 occ);
-
-        void init();
     }
 
 }

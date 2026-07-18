@@ -179,6 +179,8 @@ namespace Crystall::UCI {
 
     void loop() {
 
+        position.set_up_startpos();
+
         while (true) {
             std::string command;
             if (!std::getline(std::cin, command)) {

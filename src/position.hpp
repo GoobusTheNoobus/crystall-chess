@@ -48,9 +48,10 @@ namespace Crystall {
 
         public:
 
-        Position();
+        Position() = default;
         
         void parse_fen(const std::string& fen);
+        void set_up_startpos();
         std::string to_string() const;
 
         inline Piece get_piece_on(Square s) const { return board[int(s)]; }

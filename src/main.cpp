@@ -5,7 +5,7 @@
 
 #include "eval.hpp"
 #include "zobrist.hpp"
-#include "bitboards.hpp"
+#include "attacks.hpp"
 #include "uci.hpp"
 #include "search.hpp"
 
@@ -14,7 +14,7 @@ using namespace Crystall;
 void initialize() {
 
     // Initialize everything
-    Bitboards::init();
+    Attacks::init();
     Evaluation::init();
     Zobrist::init();
     Search::init();

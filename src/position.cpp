@@ -18,9 +18,7 @@ namespace Crystall {
         return os;
     }
 
-    Position::Position() {
-        Bitboards::init();
-        Zobrist::init();
+    void Position::set_up_startpos() {
         parse_fen(StartingPositionFen);
     }
 
@@ -199,7 +197,7 @@ namespace Crystall {
     }
 
     bool Position::is_attacked(Square square, Color by) const {
-        return Attack::is_attacked(*this, square, by);
+        return Attacks::is_attacked(*this, square, by);
     }
 
     bool Position::is_in_check(Color color) const {
