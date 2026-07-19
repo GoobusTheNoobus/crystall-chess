@@ -7,9 +7,3 @@ Version: 1.7
 
 ## Building
 Crystall uses makefiles to compile its code. Navigate to project root, and use `make` to build into an executable `crystall.exe` located in the same directory
-
-
-
-
-
-

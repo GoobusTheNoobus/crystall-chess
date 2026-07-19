@@ -12,7 +12,6 @@ namespace Crystall::Search {
 
     struct SearchInfo {
         u64 nodes_searched = 0;
-        int plies_from_root = 0;
         int seldepth = 0;
     };
 
@@ -30,14 +29,9 @@ namespace Crystall::Search {
     void start(Position pos, int depth, int movetime);
     inline void stop() { Timer::request_stop(); }
 
-    template <bool is_pv>
-    int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp = true);
-    int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta);
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const u16 move, bool log_currmove);
-
-    inline bool is_noisy(const Position& pos, const u16 move) {
-        return Move::type(move) >= Move::EnPassant || pos.get_piece_on(Move::dest(move)) != NoPiece;
-    }
+    template <NodeType NT>
+    int search(SearchInfo& info, Position& pos, int depth, int plies_from_root, int alpha, int beta, bool allow_nmp = true);
+    int qsearch_node(SearchInfo& info, Position& pos, int depth, int plies_from_root, int alpha, int beta);
 
     void init();
 }

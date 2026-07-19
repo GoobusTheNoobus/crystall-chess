@@ -23,6 +23,10 @@ namespace Crystall::Search {
         constexpr int MaxQSearchDepth = 15;
         constexpr int MinNMPDepth = 3;
         constexpr int NMPReduction = 2;
+
+        inline bool is_noisy(const Position& pos, const u16 move) {
+            return Move::type(move) >= Move::EnPassant || pos.get_piece_on(Move::dest(move)) != NoPiece;
+        }
     }
 
     void init() {
@@ -40,8 +44,8 @@ namespace Crystall::Search {
         TranspositionTable::clear();
         Timer::start(movetime);
 
-        u16 best_move = Move::NullMove;
-        int score = 0;
+        int previous_score = 0;
+        u16 best_move = 0;
 
         SearchInfo info;
         for (int depth = 1; depth <= max_depth; ++depth) {
@@ -52,27 +56,26 @@ namespace Crystall::Search {
 
             int delta = AspirationWindow;
 
-            int alpha = score - delta;
-            int beta = score + delta;
+            int alpha = previous_score - delta;
+            int beta = previous_score + delta;
 
-            RootSearchResult result;
-
+            int score;
             if (depth == 1) {
-                result = search_root(info, pos, depth, alpha, beta, best_move, false);
+                score = search<RootNode>(info, pos, depth, 0, alpha, beta, false);
             }
             else {
                 while (true) {
-                    result = search_root(info, pos, depth, alpha, beta, best_move, log_currmove);
+                    score = search<RootNode>(info, pos, depth, 0, alpha, beta, false);
 
                     if (Timer::should_stop_search()) break;
 
-                    if (result.score <= alpha) {
+                    if (score <= alpha) {
                         alpha -= delta;
                         delta *= AspirationExpansion;
                         continue;
                     }
 
-                    if (result.score >= beta) {
+                    if (score >= beta) {
                         beta += delta;
                         delta *= AspirationExpansion;
                         continue;
@@ -84,92 +87,44 @@ namespace Crystall::Search {
 
             if (Timer::should_stop_search()) break;
 
-            best_move = result.move;
-            score = result.score;
+            previous_score = score;
 
             Position copy = pos;
             std::vector<u16> pv;
 
-            if (copy.attempt_move(best_move)) {
-                pv.push_back(best_move);
+            // Read entry to get best move
+            auto entry = TranspositionTable::read(copy.get_key());
+            if (entry.depth > 0) {
+                u16 move = entry.best_move;
+
+                if (!copy.attempt_move(move)) break;
+
+                pv.push_back(move);
             }
 
-            for (int i = 0; i < depth; ++i) {
-                auto entry = TranspositionTable::read(copy.get_key());
-                if (entry.depth > 0 && entry.flag == TranspositionTable::Exact) {
-                    u16 move = entry.best_move;
+            UCI::info_depth(depth, info.seldepth, score, Timer::elapsed(), info.nodes_searched, pv);
 
-                    if (!copy.attempt_move(move)) break;
-
-                    pv.push_back(move);
-                }
-            }
-
-            UCI::info_depth(depth, info.seldepth, result.score, Timer::elapsed(), info.nodes_searched, pv);
+            best_move = pv[0];
         }
 
         std::cout << "bestmove " << Move::to_string(best_move) << std::endl;
     }
 
-    RootSearchResult search_root(SearchInfo& info, Position& pos, int depth, int alpha, int beta, const u16 root_pv, bool log_currmove) {
-        int best_score = NegativeInfinity;
-        u16 best_move = Move::NullMove;
-
-        MoveList moves(pos);
-        moves.calculate_scores(root_pv);
-
-        int i = 0;
-        int legal_moves = 0;
-        while (moves.next(i)) {
-            u16 move = moves[i];
-            ++i;
-
-            bool is_legal = pos.attempt_move(move);
-            if (!is_legal) continue;
-
-            ++legal_moves;
-
-            if (log_currmove) {
-                UCI::info_depth(depth, Timer::elapsed(), info.nodes_searched, move, legal_moves);
-            }
-
-            int score;
-            if (legal_moves > 1) {
-                score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
-            }
-
-            if (legal_moves == 1 || score > alpha) {
-                score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
-            }
-
-            pos.undo_move();
-
-            if (Timer::should_stop_search()) break;
-
-            if (score > best_score) {
-                best_move = move;
-                best_score = score;
-            }
-
-            alpha = std::max(alpha, best_score);
-            if (alpha >= beta) break;
-        }
-
-        return {best_score, best_move};
-    }
-
-    template <bool is_pv>
-    int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp) {
+    template <NodeType NT>
+    int search(SearchInfo& info, Position& pos, int depth, int plies_from_root, int alpha, int beta, bool allow_nmp) {
+        
         ++info.nodes_searched;
 
         if (pos.is_repetition() || pos.is_rule_50()) return DrawScore;
-        if (depth == 0) {
-            int qsearch_depth = info.plies_from_root * 2 + 2;
-            return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), alpha, beta);
+        if (depth == 0 && NT != RootNode) {
+
+            // Quiescence search
+            // Determine the depth by how far we are from root.
+            int qsearch_depth = plies_from_root * 2 + 2;
+            return qsearch_node(info, pos, std::min(qsearch_depth, MaxQSearchDepth), plies_from_root, alpha, beta);
         }
 
-        ++info.plies_from_root;
-        info.seldepth = std::max(info.seldepth, info.plies_from_root);
+        info.seldepth = std::max(info.seldepth, plies_from_root);
 
         if (Timer::should_stop_search()) return Timeout;
 
@@ -180,16 +135,14 @@ namespace Crystall::Search {
             tt_move = entry.best_move;
 
             if (entry.depth >= depth) {
-                if (entry.flag == TranspositionTable::Exact && !is_pv) {
-                    --info.plies_from_root;
+                if (NT == NonPVNode && entry.flag == TranspositionTable::Exact) {
                     return entry.score;
                 }
 
                 else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
                 else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
 
-                if (alpha >= beta && !is_pv) {
-                    --info.plies_from_root;
+                if (NT == NonPVNode && alpha >= beta) {
                     return entry.score;
                 }
             }
@@ -198,28 +151,26 @@ namespace Crystall::Search {
         bool in_check = pos.is_in_check();
         int static_eval = pos.evaluate();
 
-        if (!in_check && !is_pv && depth <= 3 && static_eval - 80 * depth >= beta) {
-            --info.plies_from_root;
+        if (NT == NonPVNode && !in_check && depth <= 3 && static_eval - 80 * depth >= beta) {
             return static_eval;
         }
 
-        if (!is_pv && !in_check && allow_nmp && depth >= MinNMPDepth && static_eval >= beta && pos.has_non_pawn_material()) {
+        if (NT == NonPVNode && !in_check && allow_nmp && depth >= MinNMPDepth && static_eval >= beta && pos.has_non_pawn_material()) {
 
             int reduction = NMPReduction;
 
             pos.make_move(Move::NullMove);
-            int null_score = -search_node<false>(info, pos, depth - 1 - reduction, -beta, -beta + 1, false);
+            int null_score = -search<NonPVNode>(info, pos, depth - 1 - reduction, plies_from_root + 1, -beta, -beta + 1, false);
             pos.undo_move();
 
             if (null_score >= beta) {
-                --info.plies_from_root;
                 return beta;
             }
         }
 
         int best_score = NegativeInfinity;
         u16 best_move = Move::NullMove;
-        int legal_moves = 0;
+        int move_count = 0;
         int original_alpha = alpha;
 
         MoveList moves(pos);
@@ -235,18 +186,24 @@ namespace Crystall::Search {
             bool is_legal = pos.attempt_move(move);
             if (!is_legal) continue;
 
-            ++legal_moves;
+            ++move_count;
 
-            int score;
-            if (!is_pv || legal_moves > 1) {
-                score = -search_node<false>(info, pos, depth - 1, -alpha - 1, -alpha);
+            if (NT == RootNode && Timer::elapsed() >= 1500) {
+                UCI::info_depth(depth, Timer::elapsed(), info.nodes_searched, move, move_count);
             }
 
-            if (is_pv && (legal_moves == 1 || score > alpha)) {
-                score = -search_node<true>(info, pos, depth - 1, -beta, -alpha);
+            int score;
+            if (NT == NonPVNode || move_count > 1) {
+                score = -search<NonPVNode>(info, pos, depth - 1, plies_from_root + 1, -alpha - 1, -alpha);
+            }
+
+            if (NT != NonPVNode && (move_count == 1 || score > alpha)) {
+                score = -search<PVNode>(info, pos, depth - 1, plies_from_root + 1, -beta, -alpha);
             }
 
             pos.undo_move();
+
+            if (Timer::should_stop_search()) break;
 
             if (score >= alpha) {
                 alpha = score;
@@ -273,10 +230,11 @@ namespace Crystall::Search {
             }
         }
 
-        if (legal_moves == 0) {
-            --info.plies_from_root;
+        if (move_count == 0) {
+
             if (pos.is_in_check())
-                return -MateScore + info.plies_from_root + 1;
+                return -MateScore + plies_from_root + 1;
+
             return DrawScore;
         }
 
@@ -289,11 +247,10 @@ namespace Crystall::Search {
             TranspositionTable::write(pos.get_key(), best_move, std::clamp(best_score, -KnownWin, KnownWin), depth, store_flag);
         }
 
-        --info.plies_from_root;
         return best_score;
     }
 
-    int qsearch_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta) {
+    int qsearch_node(SearchInfo& info, Position& pos, int depth, int plies_from_root, int alpha, int beta) {
         ++info.nodes_searched;
 
         if (pos.is_repetition() || pos.is_rule_50()) return DrawScore;
@@ -310,8 +267,7 @@ namespace Crystall::Search {
 
         alpha = std::max(alpha, static_eval);
 
-        ++info.plies_from_root;
-        info.seldepth = std::max(info.seldepth, info.plies_from_root);
+        info.seldepth = std::max(info.seldepth, plies_from_root);
 
         MoveList moves(pos);
         for (int i = 0; i < moves.size(); ++i) {
@@ -323,19 +279,15 @@ namespace Crystall::Search {
             bool is_legal = pos.attempt_move(move);
             if (!is_legal) continue;
 
-            int score = -qsearch_node(info, pos, depth - 1, -beta, -alpha);
+            int score = -qsearch_node(info, pos, depth - 1, plies_from_root + 1, -beta, -alpha);
             pos.undo_move();
 
-            if (score > alpha) {
-                alpha = score;
-                if (alpha >= beta) {
-                    --info.plies_from_root;
-                    return beta;
-                }
-            }
-        }
+            alpha = std::max(score, alpha);
 
-        --info.plies_from_root;
+            if (alpha >= beta) 
+                return beta;
+                
+        }
 
         return alpha;
     }
