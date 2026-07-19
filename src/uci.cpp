@@ -95,6 +95,8 @@ namespace Crystall::UCI {
                 iss >> winc;
             } else if (token == "binc") {
                 iss >> binc;
+            } else if (token == "perft") {
+                std::cout << "Perft is not supported anymore because I accidentally deleted it.\n";
             }
         }
 

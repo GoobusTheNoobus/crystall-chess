@@ -158,7 +158,7 @@ namespace Crystall::Search {
         return {best_score, best_move};
     }
 
-    template <NodeType NT>
+    template <bool is_pv>
     int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp) {
         ++info.nodes_searched;
 

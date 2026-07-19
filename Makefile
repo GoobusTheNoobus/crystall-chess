@@ -3,7 +3,7 @@
 CXX = g++
 CXXFLAGS = -std=c++20 -O3 -march=native -mbmi2 -DNDEBUG -Isrc
 
-TARGET = crystall_new.exe
+TARGET = crystall.exe
 
 SRCS := $(wildcard src/*.cpp) \
         $(wildcard src/*/*.cpp) \

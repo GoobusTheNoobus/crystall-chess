@@ -22,7 +22,7 @@ void initialize() {
 
 int main(void) {
     initialize();
-    std::cout << "Crystall UCI Chess Engine v1.6.2\n";
+    std::cout << "Crystall UCI Chess Engine v1.6.3\n";
 
     UCI::loop();
 

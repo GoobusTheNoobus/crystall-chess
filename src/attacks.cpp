@@ -10,6 +10,7 @@ namespace Crystall {
 
     namespace {
 
+        // Detect at compile time whether BMI2 is supported
         constexpr bool UseBMI2 = 
         #ifdef __BMI2__
             true
@@ -17,11 +18,6 @@ namespace Crystall {
             false
         #endif
         ;
-
-        inline u64 pext(u64 value, u64 mask)
-        {
-            return _pext_u64(value, mask);
-        }
 
         constexpr u64 KnightAttacks[SquareNB] = {
             0x0000000000020400ULL, 0x0000000000050800ULL, 0x00000000000A1100ULL, 0x0000000000142200ULL,
