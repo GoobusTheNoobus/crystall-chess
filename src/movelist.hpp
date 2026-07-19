@@ -27,6 +27,7 @@ namespace Crystall {
         void calculate_scores(const u16 special_move);
         void calculate_scores();
         inline bool next(int i) {
+            
             if (i >= size_) return false;
 
             int highest_score_index = i;

@@ -21,6 +21,12 @@ namespace Crystall::Search {
         u16 move;
     };
 
+    enum NodeType : u8 {
+        RootNode,
+        PVNode,
+        NonPVNode
+    };
+
     void start(Position pos, int depth, int movetime);
     inline void stop() { Timer::request_stop(); }
 

@@ -158,7 +158,7 @@ namespace Crystall::Search {
         return {best_score, best_move};
     }
 
-    template<bool is_pv>
+    template <NodeType NT>
     int search_node(SearchInfo& info, Position& pos, int depth, int alpha, int beta, bool allow_nmp) {
         ++info.nodes_searched;
 
@@ -180,7 +180,7 @@ namespace Crystall::Search {
             tt_move = entry.best_move;
 
             if (entry.depth >= depth) {
-                    if (entry.flag == TranspositionTable::Exact) {
+                if (entry.flag == TranspositionTable::Exact && !is_pv) {
                     --info.plies_from_root;
                     return entry.score;
                 }
@@ -188,12 +188,11 @@ namespace Crystall::Search {
                 else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
                 else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
 
-                if (alpha >= beta) {
+                if (alpha >= beta && !is_pv) {
                     --info.plies_from_root;
                     return entry.score;
                 }
             }
-
         }
 
         bool in_check = pos.is_in_check();
@@ -237,7 +236,6 @@ namespace Crystall::Search {
             if (!is_legal) continue;
 
             ++legal_moves;
-
 
             int score;
             if (!is_pv || legal_moves > 1) {
