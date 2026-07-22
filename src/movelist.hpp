@@ -8,6 +8,8 @@
 #include "movegen.hpp"
 
 namespace Crystall {
+
+    namespace TranspositionTable { struct Bucket; }
     
     class MoveList {
         private:
@@ -25,6 +27,7 @@ namespace Crystall {
         inline int size() { return size_; }
 
         void calculate_scores(const u16 special_move);
+        void calculate_scores(const TranspositionTable::Bucket& bucket);
         void calculate_scores();
         inline bool next(int i) {
             

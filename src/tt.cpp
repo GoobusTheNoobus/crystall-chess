@@ -5,34 +5,49 @@
 
 #include <cstring>
 
-namespace Crystall {
+namespace Crystall::TranspositionTable {
 
-    const TranspositionTable::Entry& TranspositionTable::read(u64 key) {
+    static inline int get_index(u64 key) { return key % BucketCount; }
+
+    const Bucket& probe(u64 key) {
         int index = get_index(key);
-        Entry& entry = data[index];
 
-        return entry.key == key ? entry : NullEntry;
+        return data[index];
     }
 
-    void TranspositionTable::write(u64 key, u16 best_move, int score, u8 depth, EntryType flag) {
+    void write(u64 key, u16 best_move, int score, u8 depth, EntryType flag) {
         int index = get_index(key);
-        Entry& entry = data[index];
+        Bucket& bucket = data[index];
 
-        if (entry.key != key || entry.depth < depth) {
-            data[index] = {key, score, best_move, depth, flag};
+        Entry* entry_getting_replaced = nullptr;
+        int lowest_depth = 900;
+        for (int i = 0; i < BucketSize; ++i) {
+            Entry* current = &bucket.entries[i];
+            if (lowest_depth > current->depth && (current->key == key || current->key == 0) && depth > current->depth) {
+                entry_getting_replaced = current;
+                lowest_depth = current->depth;
+            }
         }
+
+        // None of the entries were suitable for reaplacement
+        if (entry_getting_replaced == nullptr) {
+            return;
+        }
+
+        // We write to the lowest depth entry, since it is likely the most worthless
+        *entry_getting_replaced = {key, score, best_move, depth, flag};
     }
 
-    int TranspositionTable::hashfull() {
+    int hashfull() {
         
         int filled = 0;
         for (int i = 0; i < 1000; ++i) {
-            if (data[i].key != 0) ++filled;
+            filled += (data[i].entries[0].key + data[i].entries[1].key + data[i].entries[2].key + data[i].entries[3].key) != 0;
         }
         return filled;
     }
 
-    void TranspositionTable::clear() {
+    void clear() {
         std::memset(data, 0, sizeof(data));
     }
 

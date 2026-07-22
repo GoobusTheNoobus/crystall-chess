@@ -4,6 +4,7 @@
 #include "movelist.hpp"
 #include "search.hpp"
 #include "history.hpp"
+#include "tt.hpp"
 
 namespace Crystall {
 
@@ -20,9 +21,36 @@ namespace Crystall {
 
         constexpr int PromotionScoreTable[4] = { 790000, 750000, 732000, 731000 };
         
-        constexpr int MaxMoveScore = 1000000;
         int score_move(const Position& pos, const u16& move, const u16& special_move) {
-            if (move == special_move) return MaxMoveScore;
+            if (move == special_move) return 1200000;
+            
+            Square from = Move::from(move);
+            Square dest = Move::dest(move);
+            Move::Type flag = Move::type(move);
+
+            if (pos.get_piece_on(dest) != NoPiece) {
+                int mvvlva_score = MVVLVATable[type_of(pos.get_piece_on(from))][type_of(pos.get_piece_on(dest))];
+                return mvvlva_score;
+            }
+
+            if (flag >= Move::PromoQ) {
+                int promo_score = PromotionScoreTable[flag - Move::PromoQ];
+                return promo_score;
+            }
+
+            int history_score = Search::History::table[pos.get_side_to_move()][from][dest];
+            return history_score;
+        }
+
+        int score_move(const Position& pos, const u16& move, const TranspositionTable::Bucket& bucket) {
+            int max_score = 0;
+            for (int i = 0; i < TranspositionTable::BucketSize; ++i) {
+                if (bucket.entries[i].best_move == move) {
+                    max_score = 1100000 + bucket.entries[i].depth;
+                }
+            }
+
+            if (max_score) return max_score;
             
             Square from = Move::from(move);
             Square dest = Move::dest(move);
@@ -52,6 +80,12 @@ namespace Crystall {
     void MoveList::calculate_scores() {
         for (int i = 0; i < size_; ++i) {
             scores[i] = score_move(pos, moves[i], Move::NullMove);
+        }
+    }
+
+    void MoveList::calculate_scores(const TranspositionTable::Bucket& bucket) {
+        for (int i = 0; i < size_; ++i) {
+            scores[i] = score_move(pos, moves[i], bucket);
         }
     }
 }

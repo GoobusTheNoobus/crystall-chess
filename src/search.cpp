@@ -89,22 +89,30 @@ namespace Crystall::Search {
 
             previous_score = score;
 
-            Position copy = pos;
             std::vector<u16> pv;
 
             // Read entry to get best move
-            auto entry = TranspositionTable::read(copy.get_key());
-            if (entry.depth > 0) {
-                u16 move = entry.best_move;
+            u64 key = pos.get_key();
+            auto bucket = TranspositionTable::probe(key);
+            TranspositionTable::Entry* best_entry = nullptr;
+            int highest_depth = -1;
 
-                if (!copy.attempt_move(move)) break;
-
-                pv.push_back(move);
+            for (int i = 0; i < TranspositionTable::BucketSize; ++i) {
+                if (bucket.entries[i].depth > highest_depth && key == bucket.entries[i].key) {
+                    highest_depth = bucket.entries[i].depth;
+                    best_entry = &bucket.entries[i];
+                }
             }
+
+            if (best_entry) {
+                pv.push_back(best_entry->best_move);
+                best_move = pv[0];
+            }
+                
 
             UCI::info_depth(depth, info.seldepth, score, Timer::elapsed(), info.nodes_searched, pv);
 
-            best_move = pv[0];
+            
         }
 
         std::cout << "bestmove " << Move::to_string(best_move) << std::endl;
@@ -128,24 +136,35 @@ namespace Crystall::Search {
 
         if (Timer::should_stop_search()) return Timeout;
 
-        auto entry = TranspositionTable::read(pos.get_key());
-        u16 tt_move = Move::NullMove;
-        if (entry.depth != 0 && entry.key == pos.get_key()) {
+        // TT probe
 
-            tt_move = entry.best_move;
+        u64 key = pos.get_key();
+        auto bucket = TranspositionTable::probe(key);
+        TranspositionTable::Entry* best_entry = nullptr;
+        int highest_depth = -1;
 
-            if (entry.depth >= depth) {
-                if (NT == NonPVNode && entry.flag == TranspositionTable::Exact) {
-                    return entry.score;
-                }
+        for (int i = 0; i < TranspositionTable::BucketSize; ++i) {
+            TranspositionTable::Entry* current = &bucket.entries[i];
 
-                else if (entry.flag == TranspositionTable::Lower) alpha = std::max(alpha, entry.score);
-                else if (entry.flag == TranspositionTable::Upper) beta = std::min(beta, entry.score);
-
-                if (NT == NonPVNode && alpha >= beta) {
-                    return entry.score;
-                }
+            if (current->key == key && highest_depth < current->depth) {
+                highest_depth = current->depth;
+                best_entry = current;
             }
+        }
+
+        if (best_entry && best_entry->depth != 0) {
+
+            if (NT == NonPVNode && best_entry->flag == TranspositionTable::Exact) {
+                return best_entry->score;
+            }
+
+            else if (best_entry->flag == TranspositionTable::Lower) alpha = std::max(alpha, best_entry->score);
+            else if (best_entry->flag == TranspositionTable::Upper) beta = std::min(beta, best_entry->score);
+
+            if (NT == NonPVNode && alpha >= beta) {
+                return best_entry->score;
+            }
+            
         }
 
         bool in_check = pos.is_in_check();
@@ -174,7 +193,7 @@ namespace Crystall::Search {
         int original_alpha = alpha;
 
         MoveList moves(pos);
-        moves.calculate_scores(tt_move);
+        moves.calculate_scores(bucket);
 
         int i = 0;
         while (moves.next(i)) {

@@ -1,7 +1,7 @@
 # ======================== Crystall ========================
 
 CXX = g++
-CXXFLAGS = -std=c++20 -O3 -march=native -mbmi2 -DNDEBUG -Isrc
+CXXFLAGS = -std=c++20 -O3 -march=native -mbmi2 -g -Isrc
 
 TARGET = crystall.exe
 
