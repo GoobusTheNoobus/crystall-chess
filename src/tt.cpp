@@ -19,23 +19,32 @@ namespace Crystall::TranspositionTable {
         int index = get_index(key);
         Bucket& bucket = data[index];
 
-        Entry* entry_getting_replaced = nullptr;
-        int lowest_depth = 900;
-        for (int i = 0; i < BucketSize; ++i) {
-            Entry* current = &bucket.entries[i];
-            if (lowest_depth > current->depth && (current->key == key || current->key == 0) && depth > current->depth) {
-                entry_getting_replaced = current;
-                lowest_depth = current->depth;
+        for (int i = 0; i < BucketSize; i++) {
+            if (bucket.entries[i].key == key) {
+
+                if (depth >= bucket.entries[i].depth)
+                    bucket.entries[i] = { key, score, best_move, depth, flag };
+
+                return;
             }
         }
 
-        // None of the entries were suitable for reaplacement
-        if (entry_getting_replaced == nullptr) {
-            return;
+        for (int i = 0; i < BucketSize; i++) {
+            if (bucket.entries[i].key == 0) {
+                bucket.entries[i] = { key, score, best_move, depth, flag };
+                return;
+            }
         }
 
-        // We write to the lowest depth entry, since it is likely the most worthless
-        *entry_getting_replaced = {key, score, best_move, depth, flag};
+        Entry* replace = &bucket.entries[0];
+
+        for (int i = 1; i < BucketSize; i++) {
+            if (bucket.entries[i].depth < replace->depth)
+                replace = &bucket.entries[i];
+        }
+
+        if (depth >= replace->depth)
+            *replace = { key, score, best_move, depth, flag };
     }
 
     int hashfull() {

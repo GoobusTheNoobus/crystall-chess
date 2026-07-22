@@ -139,12 +139,12 @@ namespace Crystall::Search {
         // TT probe
 
         u64 key = pos.get_key();
-        auto bucket = TranspositionTable::probe(key);
-        TranspositionTable::Entry* best_entry = nullptr;
+        auto& bucket = TranspositionTable::probe(key);
+        const TranspositionTable::Entry* best_entry = nullptr;
         int highest_depth = -1;
 
         for (int i = 0; i < TranspositionTable::BucketSize; ++i) {
-            TranspositionTable::Entry* current = &bucket.entries[i];
+            const TranspositionTable::Entry* current = &bucket.entries[i];
 
             if (current->key == key && highest_depth < current->depth) {
                 highest_depth = current->depth;
@@ -152,7 +152,7 @@ namespace Crystall::Search {
             }
         }
 
-        if (best_entry && best_entry->depth != 0) {
+        if (best_entry && best_entry->depth >= depth) {
 
             if (NT == NonPVNode && best_entry->flag == TranspositionTable::Exact) {
                 return best_entry->score;
